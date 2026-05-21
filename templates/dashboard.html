@@ -151,8 +151,23 @@
                 </div>
                 <div class="form-section-title">Therapy Plan</div>
                 <div class="form-row">
-                    <div class="form-group"><label>Sessions per day</label><input type="number" name="daily_sessions" value="3" min="1" max="10"></div>
                     <div class="form-group"><label>Min reps per session</label><input type="number" name="min_reps" value="20" min="5" max="100"></div>
+                </div>
+                <div class="form-section-title">Weekly Schedule (0 = Rest Day)</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Monday</label><input type="number" name="mon_sessions" value="3" min="0" max="10"></div>
+                    <div class="form-group"><label>Tuesday</label><input type="number" name="tue_sessions" value="3" min="0" max="10"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Wednesday</label><input type="number" name="wed_sessions" value="3" min="0" max="10"></div>
+                    <div class="form-group"><label>Thursday</label><input type="number" name="thu_sessions" value="3" min="0" max="10"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Friday</label><input type="number" name="fri_sessions" value="3" min="0" max="10"></div>
+                    <div class="form-group"><label>Saturday</label><input type="number" name="sat_sessions" value="0" min="0" max="10"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Sunday</label><input type="number" name="sun_sessions" value="0" min="0" max="10"></div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Cancel</button>

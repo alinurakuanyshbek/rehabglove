@@ -80,6 +80,22 @@ def init_db():
             created_at TEXT
         )''')
 
+
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS mon_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS tue_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS wed_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS thu_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_sessions INTEGER DEFAULT 0")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_sessions INTEGER DEFAULT 0")
+
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS mon_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS tue_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS wed_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS thu_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_sessions INTEGER DEFAULT 0")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_sessions INTEGER DEFAULT 0")
         # Migration - add new columns
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty TEXT")
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS city TEXT")
@@ -248,14 +264,19 @@ def add_patient():
     conn = get_db()
     cur = conn.cursor()
     cur.execute('''INSERT INTO patients 
-        (name, age, diagnosis, history, phone, address, start_date, username, password, doctor_id, daily_sessions, min_reps) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+        (name, age, diagnosis, history, phone, address, start_date, username, password, doctor_id, daily_sessions, min_reps,
+         mon_sessions, tue_sessions, wed_sessions, thu_sessions, fri_sessions, sat_sessions, sun_sessions) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
         (request.form['name'], request.form['age'], request.form['diagnosis'],
          request.form.get('history', ''), request.form.get('phone', ''),
          request.form.get('address', ''), date.today().strftime('%Y-%m-%d'),
          request.form['username'], hash_password(request.form['password']),
          session['doctor_id'], int(request.form.get('daily_sessions', 3)),
-         int(request.form.get('min_reps', 20))))
+         int(request.form.get('min_reps', 20)),
+         int(request.form.get('mon_sessions', 3)), int(request.form.get('tue_sessions', 3)),
+         int(request.form.get('wed_sessions', 3)), int(request.form.get('thu_sessions', 3)),
+         int(request.form.get('fri_sessions', 3)), int(request.form.get('sat_sessions', 0)),
+         int(request.form.get('sun_sessions', 0))))
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('dashboard'))
@@ -326,9 +347,14 @@ def patient_dashboard():
     cur.execute('SELECT d.name as doctor_name FROM patients p JOIN doctors d ON p.doctor_id = d.id WHERE p.id=%s', (session['patient_id'],))
     doctor_info = cur.fetchone()
     cur.close(); conn.close()
-    daily_sessions = p['daily_sessions'] or 3
-    compliance = min(100, int((today_stats['cnt'] / daily_sessions) * 100)) if daily_sessions > 0 else 0
-    return render_template('patient_view.html', patient=p, sessions=sessions_list, today_stats=today_stats, compliance=compliance, public_notes=public_notes, my_feedback=my_feedback, doctor_info=doctor_info)
+    # Get today's goal based on day of week
+    day_map = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
+    today_day = day_map[date.today().weekday()]
+    col = f"{today_day}_sessions"
+    today_goal = p.get(col, p['daily_sessions'] or 3) or 0
+    is_rest_day = today_goal == 0
+    compliance = 0 if is_rest_day else min(100, int((today_stats['cnt'] / today_goal) * 100)) if today_goal > 0 else 0
+    return render_template('patient_view.html', patient=p, sessions=sessions_list, today_stats=today_stats, compliance=compliance, public_notes=public_notes, my_feedback=my_feedback, doctor_info=doctor_info, today_goal=today_goal, is_rest_day=is_rest_day)
 
 @app.route('/leave_feedback', methods=['POST'])
 def leave_feedback():

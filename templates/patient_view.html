@@ -76,16 +76,40 @@
         <div class="goal-card">
             <div class="goal-bg"></div>
             <div class="goal-content">
+                {% if is_rest_day %}
+                <div class="goal-label">Today's Schedule</div>
+                <div class="goal-text">😴 Rest Day — No exercises today!</div>
+                <div style="color:rgba(255,255,255,0.6); font-size:14px;">Enjoy your rest. Come back tomorrow!</div>
+                {% else %}
                 <div class="goal-label">Today's Goal from your doctor</div>
-                <div class="goal-text">{{ patient.daily_sessions }} sessions · {{ patient.min_reps }} reps minimum each</div>
+                <div class="goal-text">{{ today_goal }} sessions · {{ patient.min_reps }} reps minimum each</div>
                 <div class="goal-progress"><div class="goal-fill" style="width: {{ compliance }}%"></div></div>
                 <div class="goal-stats">
                     <div>
-                        <div class="goal-stat">Sessions done: <span>{{ today_stats.cnt }}/{{ patient.daily_sessions }}</span></div>
+                        <div class="goal-stat">Sessions done: <span>{{ today_stats.cnt }}/{{ today_goal }}</span></div>
                         <div class="goal-stat" style="margin-top:4px">Reps today: <span>{{ today_stats.reps }}</span></div>
                     </div>
                     <div class="compliance-pct">{{ compliance }}%</div>
                 </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-title">📅 Weekly Schedule</div>
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px; text-align:center;">
+                {% set days = [('Mon', patient.mon_sessions), ('Tue', patient.tue_sessions), ('Wed', patient.wed_sessions), ('Thu', patient.thu_sessions), ('Fri', patient.fri_sessions), ('Sat', patient.sat_sessions), ('Sun', patient.sun_sessions)] %}
+                {% for day, goal in days %}
+                <div style="background:{% if goal == 0 %}#F0F2F8{% else %}#FFF0EC{% endif %};border-radius:12px;padding:12px 4px;">
+                    <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">{{ day }}</div>
+                    {% if goal == 0 %}
+                    <div style="font-size:18px;">😴</div>
+                    <div style="font-size:11px;color:var(--gray);">Rest</div>
+                    {% else %}
+                    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;color:var(--orange);">{{ goal }}</div>
+                    <div style="font-size:11px;color:var(--gray);">sessions</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </div>
 
