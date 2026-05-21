@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — {{ patient.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --blue: #0A2463; --blue-mid: #1E4DB7; --blue-light: #EEF2FF;
+            --orange: #FF6B2B; --orange-light: #FFF0EC;
+            --white: #FAFAFA; --gray: #8892A4; --border: #E8ECF4;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .sidebar-bottom { margin-top: auto; }
+        .doctor-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .doctor-name { color: white; font-weight: 600; font-size: 14px; }
+        .doctor-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
+        .logout:hover { color: var(--orange); }
+        .main { margin-left: 260px; padding: 40px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
+        .back-link:hover { color: var(--orange); }
+
+        .patient-header { background: var(--blue); border-radius: 24px; padding: 36px; display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+        .patient-avatar-big { width: 80px; height: 80px; background: var(--orange); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .patient-info { flex: 1; }
+        .patient-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: white; margin-bottom: 6px; }
+        .patient-meta { color: rgba(255,255,255,0.6); font-size: 14px; }
+        .patient-badge { background: var(--orange); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+        .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row-label { color: var(--gray); font-size: 14px; }
+        .stat-row-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+        .stat-row-value.orange { color: var(--orange); }
+
+        .sessions-table { width: 100%; border-collapse: collapse; }
+        .sessions-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 0 0 16px; font-weight: 500; }
+        .sessions-table td { padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .sessions-table tr:last-child td { border-bottom: none; }
+        .rep-badge { background: var(--blue-light); color: var(--blue-mid); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; }
+        .empty-sessions { text-align: center; padding: 40px; color: var(--gray); }
+
+        .chart-container { height: 200px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">🖐</div>
+            <div class="logo-text">Rehab<span>Glove</span></div>
+        </div>
+        <a href="/dashboard" class="nav-item"><span>📊</span> Dashboard</a>
+        <div class="sidebar-bottom">
+            <div class="doctor-card">
+                <div class="doctor-name">{{ session.doctor_name }}</div>
+                <div class="doctor-role">Rehabilitation Doctor</div>
+            </div>
+            <a href="/logout" class="logout">Sign out</a>
+        </div>
+    </div>
+
+    <div class="main">
+        <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+
+        <div class="patient-header">
+            <div class="patient-avatar-big">🧑</div>
+            <div class="patient-info">
+                <div class="patient-name">{{ patient.name }}</div>
+                <div class="patient-meta">Age {{ patient.age }} · {{ sessions|length }} sessions completed</div>
+            </div>
+            <span class="patient-badge">{{ patient.diagnosis }}</span>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">📈 Progress Summary</div>
+                {% set total_reps = sessions|sum(attribute='repetitions') %}
+                {% set total_min = sessions|sum(attribute='duration') %}
+                <div class="stat-row">
+                    <span class="stat-row-label">Total Sessions</span>
+                    <span class="stat-row-value orange">{{ sessions|length }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-row-label">Total Repetitions</span>
+                    <span class="stat-row-value">{{ total_reps }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-row-label">Total Minutes</span>
+                    <span class="stat-row-value">{{ total_min }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-row-label">Avg Reps/Session</span>
+                    <span class="stat-row-value orange">{{ (total_reps / sessions|length)|int if sessions|length > 0 else 0 }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 Repetitions per Session</div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🕐 Session History</div>
+            {% if sessions %}
+            <table class="sessions-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Repetitions</th>
+                        <th>Duration (min)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sessions %}
+                    <tr>
+                        <td>{{ s.date }}</td>
+                        <td><span class="rep-badge">{{ s.repetitions }} reps</span></td>
+                        <td>{{ s.duration }} min</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-sessions">
+                <p>No sessions yet. Start the glove to record data!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const sessions = {{ sessions | tojson }};
+        const labels = sessions.map(s => s.date ? s.date.slice(5,16) : '').reverse();
+        const reps = sessions.map(s => s.repetitions).reverse();
+
+        new Chart(document.getElementById('progressChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Repetitions',
+                    data: reps,
+                    backgroundColor: '#FF6B2B',
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#E8ECF4' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
