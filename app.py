@@ -474,11 +474,18 @@ def therapy_plan(patient_id):
         cur2 = conn.cursor()
         cur2.execute('''UPDATE patients SET 
             mon_plan=%s, tue_plan=%s, wed_plan=%s, thu_plan=%s,
-            fri_plan=%s, sat_plan=%s, sun_plan=%s WHERE id=%s''',
+            fri_plan=%s, sat_plan=%s, sun_plan=%s,
+            mon_sessions=%s, tue_sessions=%s, wed_sessions=%s, thu_sessions=%s,
+            fri_sessions=%s, sat_sessions=%s, sun_sessions=%s
+            WHERE id=%s''',
             (request.form.get('mon', 'rest'), request.form.get('tue', 'rest'),
              request.form.get('wed', 'rest'), request.form.get('thu', 'rest'),
              request.form.get('fri', 'rest'), request.form.get('sat', 'rest'),
-             request.form.get('sun', 'rest'), patient_id))
+             request.form.get('sun', 'rest'),
+             int(request.form.get('mon_count', 1)), int(request.form.get('tue_count', 1)),
+             int(request.form.get('wed_count', 1)), int(request.form.get('thu_count', 1)),
+             int(request.form.get('fri_count', 1)), int(request.form.get('sat_count', 1)),
+             int(request.form.get('sun_count', 1)), patient_id))
         conn.commit()
         cur2.close(); conn.close()
         return redirect(url_for('patient', patient_id=patient_id))
