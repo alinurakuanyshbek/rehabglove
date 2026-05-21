@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; --yellow: #F59E0B; }
         body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
         .header { background: var(--blue); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
         .logo { display: flex; align-items: center; gap: 10px; }
@@ -48,6 +48,18 @@
         .mode-badge { background: #F4F6FB; color: var(--gray); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
         .empty { text-align: center; padding: 40px; color: var(--gray); }
         .diagnosis-badge { background: #FFF0EC; color: var(--orange); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; display: inline-block; margin-bottom: 32px; }
+        .note-card { background: #F8F9FC; border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 3px solid var(--orange); }
+        .note-date { font-size: 12px; color: var(--gray); margin-top: 8px; }
+        .star-rating { display: flex; gap: 8px; margin-bottom: 16px; }
+        .star { font-size: 32px; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; }
+        .star.active { opacity: 1; }
+        .feedback-form textarea { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; min-height: 80px; }
+        .feedback-form textarea:focus { border-color: var(--orange); }
+        .submit-btn { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 12px; }
+        .existing-feedback { background: #FFF0EC; border-radius: 12px; padding: 16px; }
+        .existing-stars { color: var(--yellow); font-size: 24px; margin-bottom: 8px; }
+        .doctor-info { color: var(--gray); font-size: 13px; margin-bottom: 24px; }
+        input[type="hidden"] { display: none; }
     </style>
 </head>
 <body>
@@ -59,6 +71,8 @@
         <div class="welcome">Welcome, {{ patient.name }}! 👋</div>
         <p class="subtitle">Here's your rehabilitation progress</p>
         <span class="diagnosis-badge">{{ patient.diagnosis }}</span>
+        {% if doctor_info %}<p class="doctor-info">Your doctor: <strong>{{ doctor_info.doctor_name }}</strong></p>{% endif %}
+
         <div class="goal-card">
             <div class="goal-bg"></div>
             <div class="goal-content">
@@ -74,6 +88,7 @@
                 </div>
             </div>
         </div>
+
         {% set total_reps = sessions|sum(attribute='repetitions') %}
         {% set total_min = sessions|sum(attribute='duration') %}
         <div class="stats-grid">
@@ -81,10 +96,46 @@
             <div class="stat-card"><div class="stat-icon">✊</div><div class="stat-label">Total Repetitions</div><div class="stat-value">{{ total_reps }}</div></div>
             <div class="stat-card"><div class="stat-icon">⏱</div><div class="stat-label">Total Minutes</div><div class="stat-value">{{ total_min }}</div></div>
         </div>
+
         <div class="card">
             <div class="card-title">📊 Progress Chart</div>
             <div class="chart-container"><canvas id="progressChart"></canvas></div>
         </div>
+
+        {% if public_notes %}
+        <div class="card">
+            <div class="card-title">📝 Notes from your doctor</div>
+            {% for note in public_notes %}
+            <div class="note-card">
+                <div>{{ note.content }}</div>
+                <div class="note-date">{{ note.created_at }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-title">⭐ Rate your doctor</div>
+            {% if my_feedback %}
+            <div class="existing-feedback">
+                <div class="existing-stars">{{ '⭐' * my_feedback.stars }}</div>
+                <p>{{ my_feedback.comment or 'No comment' }}</p>
+                <p style="font-size:12px; color:var(--gray); margin-top:8px;">{{ my_feedback.created_at }}</p>
+            </div>
+            {% else %}
+            <form method="POST" action="/leave_feedback" class="feedback-form">
+                <input type="hidden" name="stars" id="stars-input" value="0">
+                <div class="star-rating">
+                    {% for i in range(1, 6) %}
+                    <span class="star" data-value="{{ i }}" onclick="setStars({{ i }})">⭐</span>
+                    {% endfor %}
+                </div>
+                <textarea name="comment" placeholder="Leave a comment (optional)..."></textarea>
+                <button type="submit" class="submit-btn">Submit Feedback →</button>
+            </form>
+            {% endif %}
+        </div>
+
         <div class="card">
             <div class="card-title">🕐 Session History</div>
             {% if sessions %}
@@ -107,6 +158,12 @@
         </div>
     </div>
     <script>
+        function setStars(value) {
+            document.getElementById('stars-input').value = value;
+            document.querySelectorAll('.star').forEach((s, i) => {
+                s.classList.toggle('active', i < value);
+            });
+        }
         const sessions = {{ sessions | tojson }};
         const labels = sessions.map(s => s.date ? s.date.slice(5,16) : '').reverse();
         const reps = sessions.map(s => s.repetitions).reverse();

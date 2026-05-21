@@ -8,18 +8,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --blue: #0A2463; --blue-mid: #1E4DB7; --blue-light: #EEF2FF;
-            --orange: #FF6B2B; --orange-light: #FFF0EC;
-            --white: #FAFAFA; --gray: #8892A4; --border: #E8ECF4;
-        }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; --red: #EF4444; }
         body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
         .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
         .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
         .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
         .logo-text span { color: var(--orange); }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
         .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
         .sidebar-bottom { margin-top: auto; }
         .doctor-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
@@ -30,40 +26,52 @@
         .main { margin-left: 260px; padding: 40px; }
         .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
         .back-link:hover { color: var(--orange); }
-
-        .patient-header { background: var(--blue); border-radius: 24px; padding: 36px; display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
-        .patient-avatar-big { width: 80px; height: 80px; background: var(--orange); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-        .patient-info { flex: 1; }
+        .patient-header { background: var(--blue); border-radius: 24px; padding: 36px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .patient-header-left { display: flex; align-items: center; gap: 24px; }
+        .patient-avatar { width: 80px; height: 80px; background: var(--orange); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
         .patient-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: white; margin-bottom: 6px; }
         .patient-meta { color: rgba(255,255,255,0.6); font-size: 14px; }
         .patient-badge { background: var(--orange); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; }
-
+        .delete-btn { background: rgba(239,68,68,0.2); color: #FCA5A5; border: none; padding: 10px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .delete-btn:hover { background: var(--red); color: white; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
         .card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); }
-        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 20px; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--gray); }
+        .info-value { font-weight: 500; }
         .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
         .stat-row:last-child { border-bottom: none; }
         .stat-row-label { color: var(--gray); font-size: 14px; }
         .stat-row-value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
         .stat-row-value.orange { color: var(--orange); }
-
+        .chart-container { height: 200px; }
         .sessions-table { width: 100%; border-collapse: collapse; }
-        .sessions-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 0 0 16px; font-weight: 500; }
+        .sessions-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 0 0 16px; }
         .sessions-table td { padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
         .sessions-table tr:last-child td { border-bottom: none; }
-        .rep-badge { background: var(--blue-light); color: var(--blue-mid); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; }
-        .empty-sessions { text-align: center; padding: 40px; color: var(--gray); }
-
-        .chart-container { height: 200px; }
+        .rep-badge { background: #EEF2FF; color: #1E4DB7; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; }
+        .mode-badge { background: #F4F6FB; color: var(--gray); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+        .empty { text-align: center; padding: 40px; color: var(--gray); }
+        .note-card { background: #F8F9FC; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .note-card.private { border-left: 3px solid var(--red); }
+        .note-card.public { border-left: 3px solid var(--green); }
+        .note-type { font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+        .note-type.private { color: var(--red); }
+        .note-type.public { color: var(--green); }
+        .note-date { font-size: 12px; color: var(--gray); margin-top: 6px; }
+        .note-form textarea { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; min-height: 80px; margin-bottom: 12px; }
+        .note-form textarea:focus { border-color: var(--orange); }
+        .note-form-footer { display: flex; justify-content: space-between; align-items: center; }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--gray); cursor: pointer; }
+        .submit-btn { background: var(--orange); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; }
+        .history-text { font-size: 14px; color: var(--gray); line-height: 1.7; background: #F8F9FC; border-radius: 10px; padding: 16px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo">
-            <div class="logo-icon">🖐</div>
-            <div class="logo-text">Rehab<span>Glove</span></div>
-        </div>
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
         <a href="/dashboard" class="nav-item"><span>📊</span> Dashboard</a>
         <div class="sidebar-bottom">
             <div class="doctor-card">
@@ -73,47 +81,76 @@
             <a href="/logout" class="logout">Sign out</a>
         </div>
     </div>
-
     <div class="main">
         <a href="/dashboard" class="back-link">← Back to Dashboard</a>
-
         <div class="patient-header">
-            <div class="patient-avatar-big">🧑</div>
-            <div class="patient-info">
-                <div class="patient-name">{{ patient.name }}</div>
-                <div class="patient-meta">Age {{ patient.age }} · {{ sessions|length }} sessions completed</div>
+            <div class="patient-header-left">
+                <div class="patient-avatar">🧑</div>
+                <div>
+                    <div class="patient-name">{{ patient.name }}</div>
+                    <div class="patient-meta">Age {{ patient.age }} · {{ sessions|length }} sessions · Started {{ patient.start_date or 'N/A' }}</div>
+                </div>
             </div>
-            <span class="patient-badge">{{ patient.diagnosis }}</span>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <span class="patient-badge">{{ patient.diagnosis }}</span>
+                <a href="/delete_patient/{{ patient.id }}" class="delete-btn" onclick="return confirm('Delete this patient? All data will be lost!')">🗑 Delete</a>
+            </div>
         </div>
 
         <div class="grid-2">
             <div class="card">
+                <div class="card-title">👤 Patient Info</div>
+                <div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ patient.phone or '—' }}</span></div>
+                <div class="info-row"><span class="info-label">Address</span><span class="info-value">{{ patient.address or '—' }}</span></div>
+                <div class="info-row"><span class="info-label">Daily goal</span><span class="info-value">{{ patient.daily_sessions }} sessions/day</span></div>
+                <div class="info-row"><span class="info-label">Min reps</span><span class="info-value">{{ patient.min_reps }} reps</span></div>
+                {% if patient.history %}
+                <div style="margin-top:16px;">
+                    <div class="info-label" style="margin-bottom:8px;">Medical History</div>
+                    <div class="history-text">{{ patient.history }}</div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card">
                 <div class="card-title">📈 Progress Summary</div>
                 {% set total_reps = sessions|sum(attribute='repetitions') %}
                 {% set total_min = sessions|sum(attribute='duration') %}
-                <div class="stat-row">
-                    <span class="stat-row-label">Total Sessions</span>
-                    <span class="stat-row-value orange">{{ sessions|length }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-row-label">Total Repetitions</span>
-                    <span class="stat-row-value">{{ total_reps }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-row-label">Total Minutes</span>
-                    <span class="stat-row-value">{{ total_min }}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-row-label">Avg Reps/Session</span>
-                    <span class="stat-row-value orange">{{ (total_reps / sessions|length)|int if sessions|length > 0 else 0 }}</span>
-                </div>
+                <div class="stat-row"><span class="stat-row-label">Total Sessions</span><span class="stat-row-value orange">{{ sessions|length }}</span></div>
+                <div class="stat-row"><span class="stat-row-label">Total Repetitions</span><span class="stat-row-value">{{ total_reps }}</span></div>
+                <div class="stat-row"><span class="stat-row-label">Total Minutes</span><span class="stat-row-value">{{ total_min }}</span></div>
+                <div class="stat-row"><span class="stat-row-label">Avg Reps/Session</span><span class="stat-row-value orange">{{ (total_reps / sessions|length)|int if sessions|length > 0 else 0 }}</span></div>
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-title">📊 Repetitions per Session</div>
-                <div class="chart-container">
-                    <canvas id="progressChart"></canvas>
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-title">📊 Progress Chart</div>
+            <div class="chart-container"><canvas id="progressChart"></canvas></div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-title">📝 Notes</div>
+            <form method="POST" action="/add_note/{{ patient.id }}" class="note-form">
+                <textarea name="content" placeholder="Write a note about this patient..." required></textarea>
+                <div class="note-form-footer">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_private" checked>
+                        Private (only visible to doctors)
+                    </label>
+                    <button type="submit" class="submit-btn">Add Note →</button>
                 </div>
+            </form>
+            <div style="margin-top:20px;">
+                {% if notes %}
+                {% for note in notes %}
+                <div class="note-card {{ 'private' if note.is_private else 'public' }}">
+                    <div class="note-type {{ 'private' if note.is_private else 'public' }}">{{ '🔒 Private' if note.is_private else '👁 Visible to patient' }}</div>
+                    <div>{{ note.content }}</div>
+                    <div class="note-date">{{ note.created_at }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty">No notes yet.</div>
+                {% endif %}
             </div>
         </div>
 
@@ -121,56 +158,31 @@
             <div class="card-title">🕐 Session History</div>
             {% if sessions %}
             <table class="sessions-table">
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Repetitions</th>
-                        <th>Duration (min)</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Date</th><th>Repetitions</th><th>Duration</th><th>Mode</th></tr></thead>
                 <tbody>
                     {% for s in sessions %}
                     <tr>
                         <td>{{ s.date }}</td>
                         <td><span class="rep-badge">{{ s.repetitions }} reps</span></td>
                         <td>{{ s.duration }} min</td>
+                        <td><span class="mode-badge">{{ s.mode or 'manual' }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             {% else %}
-            <div class="empty-sessions">
-                <p>No sessions yet. Start the glove to record data!</p>
-            </div>
+            <div class="empty">No sessions yet.</div>
             {% endif %}
         </div>
     </div>
-
     <script>
         const sessions = {{ sessions | tojson }};
         const labels = sessions.map(s => s.date ? s.date.slice(5,16) : '').reverse();
         const reps = sessions.map(s => s.repetitions).reverse();
-
         new Chart(document.getElementById('progressChart'), {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Repetitions',
-                    data: reps,
-                    backgroundColor: '#FF6B2B',
-                    borderRadius: 8,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#E8ECF4' } },
-                    x: { grid: { display: false } }
-                }
-            }
+            data: { labels: labels, datasets: [{ label: 'Repetitions', data: reps, backgroundColor: '#FF6B2B', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#E8ECF4' } }, x: { grid: { display: false } } } }
         });
     </script>
 </body>

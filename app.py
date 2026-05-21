@@ -18,14 +18,73 @@ def init_db():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('''CREATE TABLE IF NOT EXISTS doctors (id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL)''')
-        cur.execute('''CREATE TABLE IF NOT EXISTS patients (id SERIAL PRIMARY KEY, name TEXT NOT NULL, age INTEGER, diagnosis TEXT, username TEXT UNIQUE, password TEXT, doctor_id INTEGER REFERENCES doctors(id), daily_sessions INTEGER DEFAULT 3, min_reps INTEGER DEFAULT 20)''')
-        cur.execute('''CREATE TABLE IF NOT EXISTS sessions (id SERIAL PRIMARY KEY, patient_id INTEGER REFERENCES patients(id), repetitions INTEGER DEFAULT 0, duration INTEGER DEFAULT 0, date TEXT, mode TEXT DEFAULT 'manual')''')
-        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS daily_sessions INTEGER DEFAULT 3")
-        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS min_reps INTEGER DEFAULT 20")
-        cur.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'manual'")
-        password = hash_password('doctor123')
-        cur.execute("INSERT INTO doctors (username, password, name) VALUES ('doctor', %s, 'Dr. Alibek') ON CONFLICT (username) DO NOTHING", (password,))
+        # Doctors
+        cur.execute('''CREATE TABLE IF NOT EXISTS doctors (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            name TEXT NOT NULL,
+            specialty TEXT,
+            city TEXT,
+            phone TEXT,
+            is_active BOOLEAN DEFAULT TRUE
+        )''')
+        # Admins
+        cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            name TEXT NOT NULL
+        )''')
+        # Patients
+        cur.execute('''CREATE TABLE IF NOT EXISTS patients (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            age INTEGER,
+            diagnosis TEXT,
+            history TEXT,
+            phone TEXT,
+            address TEXT,
+            start_date TEXT,
+            username TEXT UNIQUE,
+            password TEXT,
+            doctor_id INTEGER REFERENCES doctors(id),
+            daily_sessions INTEGER DEFAULT 3,
+            min_reps INTEGER DEFAULT 20
+        )''')
+        # Sessions
+        cur.execute('''CREATE TABLE IF NOT EXISTS sessions (
+            id SERIAL PRIMARY KEY,
+            patient_id INTEGER REFERENCES patients(id),
+            repetitions INTEGER DEFAULT 0,
+            duration INTEGER DEFAULT 0,
+            date TEXT,
+            mode TEXT DEFAULT 'manual'
+        )''')
+        # Notes
+        cur.execute('''CREATE TABLE IF NOT EXISTS notes (
+            id SERIAL PRIMARY KEY,
+            patient_id INTEGER REFERENCES patients(id),
+            doctor_id INTEGER REFERENCES doctors(id),
+            content TEXT NOT NULL,
+            is_private BOOLEAN DEFAULT TRUE,
+            created_at TEXT
+        )''')
+        # Feedback
+        cur.execute('''CREATE TABLE IF NOT EXISTS feedback (
+            id SERIAL PRIMARY KEY,
+            patient_id INTEGER REFERENCES patients(id),
+            doctor_id INTEGER REFERENCES doctors(id),
+            stars INTEGER NOT NULL,
+            comment TEXT,
+            created_at TEXT
+        )''')
+        # Default admin
+        admin_pwd = hash_password('admin123')
+        cur.execute("INSERT INTO admins (username, password, name) VALUES ('admin', %s, 'Super Admin') ON CONFLICT (username) DO NOTHING", (admin_pwd,))
+        # Default doctor
+        doctor_pwd = hash_password('doctor123')
+        cur.execute("INSERT INTO doctors (username, password, name) VALUES ('doctor', %s, 'Dr. Alibek') ON CONFLICT (username) DO NOTHING", (doctor_pwd,))
         conn.commit()
         cur.close()
         conn.close()
@@ -34,6 +93,14 @@ def init_db():
 
 init_db()
 
+# ─── HELPERS ───
+def get_role():
+    if 'admin_id' in session: return 'admin'
+    if 'doctor_id' in session: return 'doctor'
+    if 'patient_id' in session: return 'patient'
+    return None
+
+# ─── ROUTES ───
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -47,13 +114,23 @@ def login():
         try:
             conn = get_db()
             cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM doctors WHERE username=%s AND password=%s', (username, password))
+            # Check admin
+            cur.execute('SELECT * FROM admins WHERE username=%s AND password=%s', (username, password))
+            admin = cur.fetchone()
+            if admin:
+                session['admin_id'] = admin['id']
+                session['admin_name'] = admin['name']
+                cur.close(); conn.close()
+                return redirect(url_for('admin_dashboard'))
+            # Check doctor
+            cur.execute('SELECT * FROM doctors WHERE username=%s AND password=%s AND is_active=TRUE', (username, password))
             doctor = cur.fetchone()
             if doctor:
                 session['doctor_id'] = doctor['id']
                 session['doctor_name'] = doctor['name']
                 cur.close(); conn.close()
                 return redirect(url_for('dashboard'))
+            # Check patient
             cur.execute('SELECT * FROM patients WHERE username=%s AND password=%s', (username, password))
             patient = cur.fetchone()
             if patient:
@@ -72,6 +149,62 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+# ─── ADMIN ───
+@app.route('/admin')
+def admin_dashboard():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('''SELECT d.*, 
+        COUNT(DISTINCT p.id) as patient_count,
+        COUNT(DISTINCT s.id) as session_count,
+        COALESCE(AVG(f.stars), 0) as avg_rating
+        FROM doctors d
+        LEFT JOIN patients p ON p.doctor_id = d.id
+        LEFT JOIN sessions s ON s.patient_id = p.id
+        LEFT JOIN feedback f ON f.doctor_id = d.id
+        GROUP BY d.id ORDER BY d.name''')
+    doctors = cur.fetchall()
+    cur.execute('SELECT COUNT(*) as total FROM patients')
+    total_patients = cur.fetchone()['total']
+    cur.execute('SELECT COUNT(*) as total FROM sessions')
+    total_sessions = cur.fetchone()['total']
+    cur.execute('''SELECT f.*, p.name as patient_name, d.name as doctor_name
+        FROM feedback f
+        JOIN patients p ON f.patient_id = p.id
+        JOIN doctors d ON f.doctor_id = d.id
+        ORDER BY f.created_at DESC LIMIT 20''')
+    feedbacks = cur.fetchall()
+    cur.close(); conn.close()
+    return render_template('admin.html', doctors=doctors, total_patients=total_patients, total_sessions=total_sessions, feedbacks=feedbacks)
+
+@app.route('/admin/add_doctor', methods=['POST'])
+def add_doctor():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('INSERT INTO doctors (username, password, name, specialty, city, phone) VALUES (%s, %s, %s, %s, %s, %s)',
+               (request.form['username'], hash_password(request.form['password']),
+                request.form['name'], request.form['specialty'],
+                request.form['city'], request.form['phone']))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_doctor/<int:doctor_id>')
+def delete_doctor(doctor_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('UPDATE doctors SET is_active=FALSE WHERE id=%s', (doctor_id,))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+# ─── DOCTOR ───
 @app.route('/dashboard')
 def dashboard():
     if 'doctor_id' not in session:
@@ -90,23 +223,40 @@ def dashboard():
         patients_with_compliance.append({**dict(p), 'compliance': compliance, 'today_sessions': today_stats['cnt'], 'today_reps': today_stats['reps']})
     cur.execute('SELECT COUNT(*) as total_sessions, COALESCE(SUM(repetitions),0) as total_reps FROM sessions s JOIN patients p ON s.patient_id = p.id WHERE p.doctor_id=%s', (session['doctor_id'],))
     stats = cur.fetchone()
+    cur.execute('SELECT COALESCE(AVG(stars), 0) as avg_rating, COUNT(*) as total FROM feedback WHERE doctor_id=%s', (session['doctor_id'],))
+    rating = cur.fetchone()
     cur.close(); conn.close()
-    return render_template('dashboard.html', patients=patients_with_compliance, stats=stats)
+    return render_template('dashboard.html', patients=patients_with_compliance, stats=stats, rating=rating)
 
 @app.route('/add_patient', methods=['POST'])
 def add_patient():
     if 'doctor_id' not in session:
         return redirect(url_for('login'))
-    name = request.form['name']
-    age = request.form['age']
-    diagnosis = request.form['diagnosis']
-    username = request.form['username']
-    password = hash_password(request.form['password'])
-    daily_sessions = int(request.form.get('daily_sessions', 3))
-    min_reps = int(request.form.get('min_reps', 20))
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('INSERT INTO patients (name, age, diagnosis, username, password, doctor_id, daily_sessions, min_reps) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (name, age, diagnosis, username, password, session['doctor_id'], daily_sessions, min_reps))
+    cur.execute('''INSERT INTO patients 
+        (name, age, diagnosis, history, phone, address, start_date, username, password, doctor_id, daily_sessions, min_reps) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+        (request.form['name'], request.form['age'], request.form['diagnosis'],
+         request.form.get('history', ''), request.form.get('phone', ''),
+         request.form.get('address', ''), date.today().strftime('%Y-%m-%d'),
+         request.form['username'], hash_password(request.form['password']),
+         session['doctor_id'], int(request.form.get('daily_sessions', 3)),
+         int(request.form.get('min_reps', 20))))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('dashboard'))
+
+@app.route('/delete_patient/<int:patient_id>')
+def delete_patient(patient_id):
+    if 'doctor_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM notes WHERE patient_id=%s', (patient_id,))
+    cur.execute('DELETE FROM feedback WHERE patient_id=%s', (patient_id,))
+    cur.execute('DELETE FROM sessions WHERE patient_id=%s', (patient_id,))
+    cur.execute('DELETE FROM patients WHERE id=%s AND doctor_id=%s', (patient_id, session['doctor_id']))
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('dashboard'))
@@ -124,9 +274,25 @@ def patient(patient_id):
         return redirect(url_for('dashboard'))
     cur.execute('SELECT * FROM sessions WHERE patient_id=%s ORDER BY date DESC', (patient_id,))
     sessions_list = cur.fetchall()
+    cur.execute('SELECT * FROM notes WHERE patient_id=%s ORDER BY created_at DESC', (patient_id,))
+    notes = cur.fetchall()
     cur.close(); conn.close()
-    return render_template('patient.html', patient=p, sessions=sessions_list)
+    return render_template('patient.html', patient=p, sessions=sessions_list, notes=notes)
 
+@app.route('/add_note/<int:patient_id>', methods=['POST'])
+def add_note(patient_id):
+    if 'doctor_id' not in session:
+        return redirect(url_for('login'))
+    is_private = request.form.get('is_private') == 'on'
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('INSERT INTO notes (patient_id, doctor_id, content, is_private, created_at) VALUES (%s, %s, %s, %s, %s)',
+               (patient_id, session['doctor_id'], request.form['content'], is_private, datetime.now().strftime('%Y-%m-%d %H:%M')))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('patient', patient_id=patient_id))
+
+# ─── PATIENT ───
 @app.route('/patient_dashboard')
 def patient_dashboard():
     if 'patient_id' not in session:
@@ -140,17 +306,42 @@ def patient_dashboard():
     today = date.today().strftime('%Y-%m-%d')
     cur.execute('SELECT COUNT(*) as cnt, COALESCE(SUM(repetitions),0) as reps FROM sessions WHERE patient_id=%s AND date LIKE %s', (session['patient_id'], today+'%'))
     today_stats = cur.fetchone()
+    cur.execute('SELECT * FROM notes WHERE patient_id=%s AND is_private=FALSE ORDER BY created_at DESC', (session['patient_id'],))
+    public_notes = cur.fetchall()
+    cur.execute('SELECT * FROM feedback WHERE patient_id=%s ORDER BY created_at DESC LIMIT 1', (session['patient_id'],))
+    my_feedback = cur.fetchone()
+    cur.execute('SELECT d.name as doctor_name FROM patients p JOIN doctors d ON p.doctor_id = d.id WHERE p.id=%s', (session['patient_id'],))
+    doctor_info = cur.fetchone()
     cur.close(); conn.close()
     daily_sessions = p['daily_sessions'] or 3
     compliance = min(100, int((today_stats['cnt'] / daily_sessions) * 100)) if daily_sessions > 0 else 0
-    return render_template('patient_view.html', patient=p, sessions=sessions_list, today_stats=today_stats, compliance=compliance)
+    return render_template('patient_view.html', patient=p, sessions=sessions_list, today_stats=today_stats, compliance=compliance, public_notes=public_notes, my_feedback=my_feedback, doctor_info=doctor_info)
 
+@app.route('/leave_feedback', methods=['POST'])
+def leave_feedback():
+    if 'patient_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT doctor_id FROM patients WHERE id=%s', (session['patient_id'],))
+    p = cur.fetchone()
+    cur.execute('DELETE FROM feedback WHERE patient_id=%s', (session['patient_id'],))
+    cur.execute('INSERT INTO feedback (patient_id, doctor_id, stars, comment, created_at) VALUES (%s, %s, %s, %s, %s)',
+               (session['patient_id'], p['doctor_id'], int(request.form['stars']),
+                request.form.get('comment', ''), datetime.now().strftime('%Y-%m-%d %H:%M')))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('patient_dashboard'))
+
+# ─── API ───
 @app.route('/api/session', methods=['POST'])
 def receive_session():
     data = request.json
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('INSERT INTO sessions (patient_id, repetitions, duration, date, mode) VALUES (%s, %s, %s, %s, %s)', (data.get('patient_id'), data.get('repetitions', 0), data.get('duration', 0), datetime.now().strftime('%Y-%m-%d %H:%M'), data.get('mode', 'manual')))
+    cur.execute('INSERT INTO sessions (patient_id, repetitions, duration, date, mode) VALUES (%s, %s, %s, %s, %s)',
+               (data.get('patient_id'), data.get('repetitions', 0), data.get('duration', 0),
+                datetime.now().strftime('%Y-%m-%d %H:%M'), data.get('mode', 'manual')))
     conn.commit()
     cur.close(); conn.close()
     return jsonify({'status': 'ok'})
