@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — Therapy Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .sidebar-bottom { margin-top: auto; }
+        .doctor-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .doctor-name { color: white; font-weight: 600; font-size: 14px; }
+        .doctor-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
+        .logout:hover { color: var(--orange); }
+        .main { margin-left: 260px; padding: 40px; max-width: 800px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
+        .back-link:hover { color: var(--orange); }
+        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 8px; }
+        .page-subtitle { color: var(--gray); font-size: 14px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 24px; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 24px; }
+        .day-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+        .day-row:last-child { border-bottom: none; }
+        .day-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; width: 120px; }
+        .options { display: flex; gap: 8px; flex-wrap: wrap; }
+        .option-btn { display: none; }
+        .option-label {
+            padding: 10px 16px; border-radius: 10px; cursor: pointer;
+            font-size: 13px; font-weight: 500; border: 2px solid var(--border);
+            transition: all 0.2s; background: white;
+        }
+        .option-btn:checked + .option-label { border-color: var(--orange); background: #FFF0EC; color: var(--orange); }
+        .option-btn.rest:checked + .option-label { border-color: var(--gray); background: #F4F6FB; color: var(--gray); }
+        .legend { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; text-decoration: none; text-align: center; }
+        .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+        <a href="/dashboard" class="nav-item"><span>📊</span> Dashboard</a>
+        <div class="sidebar-bottom">
+            <div class="doctor-card">
+                <div class="doctor-name">{{ session.doctor_name }}</div>
+                <div class="doctor-role">Rehabilitation Doctor</div>
+            </div>
+            <a href="/logout" class="logout">Sign out</a>
+        </div>
+    </div>
+    <div class="main">
+        <a href="/patient/{{ patient.id }}" class="back-link">← Back to Patient</a>
+        <div class="page-title">Therapy Plan</div>
+        <div class="page-subtitle">Set weekly schedule for {{ patient.name }}</div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#8892A4"></div> Rest Day</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> Option 1 — 5 min</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1E4DB7"></div> Option 2 — 15 min</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Option 3 — 20 min</div>
+        </div>
+
+        <form method="POST" action="/therapy_plan/{{ patient.id }}">
+            <div class="card">
+                <div class="card-title">📅 Weekly Schedule</div>
+                {% set days = [
+                    ('Monday', 'mon', patient.mon_plan),
+                    ('Tuesday', 'tue', patient.tue_plan),
+                    ('Wednesday', 'wed', patient.wed_plan),
+                    ('Thursday', 'thu', patient.thu_plan),
+                    ('Friday', 'fri', patient.fri_plan),
+                    ('Saturday', 'sat', patient.sat_plan),
+                    ('Sunday', 'sun', patient.sun_plan)
+                ] %}
+                {% for day_name, day_key, current in days %}
+                <div class="day-row">
+                    <div class="day-name">{{ day_name }}</div>
+                    <div class="options">
+                        <input type="radio" class="option-btn rest" name="{{ day_key }}" id="{{ day_key }}_rest" value="rest" {{ 'checked' if current == 'rest' or not current }}>
+                        <label class="option-label" for="{{ day_key }}_rest">😴 Rest</label>
+
+                        <input type="radio" class="option-btn" name="{{ day_key }}" id="{{ day_key }}_opt1" value="option1" {{ 'checked' if current == 'option1' }}>
+                        <label class="option-label" for="{{ day_key }}_opt1">⚡ Option 1 (5 min)</label>
+
+                        <input type="radio" class="option-btn" name="{{ day_key }}" id="{{ day_key }}_opt2" value="option2" {{ 'checked' if current == 'option2' }}>
+                        <label class="option-label" for="{{ day_key }}_opt2">🔥 Option 2 (15 min)</label>
+
+                        <input type="radio" class="option-btn" name="{{ day_key }}" id="{{ day_key }}_opt3" value="option3" {{ 'checked' if current == 'option3' }}>
+                        <label class="option-label" for="{{ day_key }}_opt3">💪 Option 3 (20 min)</label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="form-actions">
+                <a href="/patient/{{ patient.id }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">Save Plan →</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -3,6 +3,15 @@ import psycopg2
 import psycopg2.extras
 import hashlib
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
+
+ASTANA_TZ = ZoneInfo('Asia/Almaty')
+
+def now_astana():
+    return datetime.now(ASTANA_TZ).strftime('%Y-%m-%d %H:%M')
+
+def today_astana():
+    return datetime.now(ASTANA_TZ).date()
 import os
 
 app = Flask(__name__)
@@ -96,6 +105,14 @@ def init_db():
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_sessions INTEGER DEFAULT 3")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_sessions INTEGER DEFAULT 0")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_sessions INTEGER DEFAULT 0")
+
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS mon_plan TEXT DEFAULT 'option1'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS tue_plan TEXT DEFAULT 'option1'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS wed_plan TEXT DEFAULT 'option1'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS thu_plan TEXT DEFAULT 'option1'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_plan TEXT DEFAULT 'option1'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_plan TEXT DEFAULT 'rest'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_plan TEXT DEFAULT 'rest'")
         # Migration - add new columns
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty TEXT")
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS city TEXT")
@@ -242,7 +259,7 @@ def dashboard():
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute('SELECT * FROM patients WHERE doctor_id=%s ORDER BY name', (session['doctor_id'],))
     patients = cur.fetchall()
-    today = date.today().strftime('%Y-%m-%d')
+    today = today_astana().strftime('%Y-%m-%d')
     patients_with_compliance = []
     for p in patients:
         cur.execute('SELECT COUNT(*) as cnt, COALESCE(SUM(repetitions),0) as reps FROM sessions WHERE patient_id=%s AND date LIKE %s', (p['id'], today+'%'))
@@ -269,7 +286,7 @@ def add_patient():
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
         (request.form['name'], request.form['age'], request.form['diagnosis'],
          request.form.get('history', ''), request.form.get('phone', ''),
-         request.form.get('address', ''), date.today().strftime('%Y-%m-%d'),
+         request.form.get('address', ''), today_astana().strftime('%Y-%m-%d'),
          request.form['username'], hash_password(request.form['password']),
          session['doctor_id'], int(request.form.get('daily_sessions', 3)),
          int(request.form.get('min_reps', 20)),
@@ -321,7 +338,7 @@ def add_note(patient_id):
     conn = get_db()
     cur = conn.cursor()
     cur.execute('INSERT INTO notes (patient_id, doctor_id, content, is_private, created_at) VALUES (%s, %s, %s, %s, %s)',
-               (patient_id, session['doctor_id'], request.form['content'], is_private, datetime.now().strftime('%Y-%m-%d %H:%M')))
+               (patient_id, session['doctor_id'], request.form['content'], is_private, now_astana()))
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('patient', patient_id=patient_id))
@@ -337,7 +354,7 @@ def patient_dashboard():
     p = cur.fetchone()
     cur.execute('SELECT * FROM sessions WHERE patient_id=%s ORDER BY date DESC', (session['patient_id'],))
     sessions_list = cur.fetchall()
-    today = date.today().strftime('%Y-%m-%d')
+    today = today_astana().strftime('%Y-%m-%d')
     cur.execute('SELECT COUNT(*) as cnt, COALESCE(SUM(repetitions),0) as reps FROM sessions WHERE patient_id=%s AND date LIKE %s', (session['patient_id'], today+'%'))
     today_stats = cur.fetchone()
     cur.execute('SELECT * FROM notes WHERE patient_id=%s AND is_private=FALSE ORDER BY created_at DESC', (session['patient_id'],))
@@ -349,7 +366,7 @@ def patient_dashboard():
     cur.close(); conn.close()
     # Get today's goal based on day of week
     day_map = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'}
-    today_day = day_map[date.today().weekday()]
+    today_day = day_map[today_astana().weekday()]
     col = f"{today_day}_sessions"
     today_goal = p.get(col, p['daily_sessions'] or 3) or 0
     is_rest_day = today_goal == 0
@@ -367,7 +384,7 @@ def leave_feedback():
     cur.execute('DELETE FROM feedback WHERE patient_id=%s', (session['patient_id'],))
     cur.execute('INSERT INTO feedback (patient_id, doctor_id, stars, comment, created_at) VALUES (%s, %s, %s, %s, %s)',
                (session['patient_id'], p['doctor_id'], int(request.form['stars']),
-                request.form.get('comment', ''), datetime.now().strftime('%Y-%m-%d %H:%M')))
+                request.form.get('comment', ''), now_astana()))
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('patient_dashboard'))
@@ -380,7 +397,7 @@ def receive_session():
     cur = conn.cursor()
     cur.execute('INSERT INTO sessions (patient_id, repetitions, duration, date, mode) VALUES (%s, %s, %s, %s, %s)',
                (data.get('patient_id'), data.get('repetitions', 0), data.get('duration', 0),
-                datetime.now().strftime('%Y-%m-%d %H:%M'), data.get('mode', 'manual')))
+                now_astana(), data.get('mode', 'manual')))
     conn.commit()
     cur.close(); conn.close()
     return jsonify({'status': 'ok'})
@@ -441,6 +458,33 @@ def reset_password():
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('admin_doctors_list'))
+
+@app.route('/therapy_plan/<int:patient_id>', methods=['GET', 'POST'])
+def therapy_plan(patient_id):
+    if 'doctor_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM patients WHERE id=%s AND doctor_id=%s', (patient_id, session['doctor_id']))
+    p = cur.fetchone()
+    if not p:
+        cur.close(); conn.close()
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        cur2 = conn.cursor()
+        cur2.execute('''UPDATE patients SET 
+            mon_plan=%s, tue_plan=%s, wed_plan=%s, thu_plan=%s,
+            fri_plan=%s, sat_plan=%s, sun_plan=%s WHERE id=%s''',
+            (request.form.get('mon', 'rest'), request.form.get('tue', 'rest'),
+             request.form.get('wed', 'rest'), request.form.get('thu', 'rest'),
+             request.form.get('fri', 'rest'), request.form.get('sat', 'rest'),
+             request.form.get('sun', 'rest'), patient_id))
+        conn.commit()
+        cur2.close(); conn.close()
+        return redirect(url_for('patient', patient_id=patient_id))
+    cur.close(); conn.close()
+    return render_template('therapy_plan.html', patient=p)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
