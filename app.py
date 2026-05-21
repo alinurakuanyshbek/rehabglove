@@ -346,5 +346,62 @@ def receive_session():
     cur.close(); conn.close()
     return jsonify({'status': 'ok'})
 
+@app.route('/edit_patient/<int:patient_id>', methods=['GET', 'POST'])
+def edit_patient(patient_id):
+    if 'doctor_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM patients WHERE id=%s AND doctor_id=%s', (patient_id, session['doctor_id']))
+    p = cur.fetchone()
+    if not p:
+        cur.close(); conn.close()
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        cur2 = conn.cursor()
+        cur2.execute('''UPDATE patients SET name=%s, age=%s, diagnosis=%s, history=%s, phone=%s, address=%s, daily_sessions=%s, min_reps=%s WHERE id=%s''',
+                   (request.form['name'], request.form['age'], request.form['diagnosis'],
+                    request.form.get('history', ''), request.form.get('phone', ''),
+                    request.form.get('address', ''), int(request.form.get('daily_sessions', 3)),
+                    int(request.form.get('min_reps', 20)), patient_id))
+        if request.form.get('password'):
+            cur2.execute('UPDATE patients SET password=%s WHERE id=%s', (hash_password(request.form['password']), patient_id))
+        conn.commit()
+        cur2.close(); conn.close()
+        return redirect(url_for('patient', patient_id=patient_id))
+    cur.close(); conn.close()
+    return render_template('edit_patient.html', patient=p)
+
+@app.route('/admin/doctors_list')
+def admin_doctors_list():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM doctors ORDER BY name')
+    doctors = cur.fetchall()
+    cur.execute('''SELECT p.*, d.name as doctor_name FROM patients p 
+                   JOIN doctors d ON p.doctor_id = d.id ORDER BY p.name''')
+    patients = cur.fetchall()
+    cur.close(); conn.close()
+    return render_template('admin_accounts.html', doctors=doctors, patients=patients)
+
+@app.route('/admin/reset_password', methods=['POST'])
+def reset_password():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    user_type = request.form['user_type']
+    user_id = request.form['user_id']
+    new_password = hash_password(request.form['new_password'])
+    conn = get_db()
+    cur = conn.cursor()
+    if user_type == 'doctor':
+        cur.execute('UPDATE doctors SET password=%s WHERE id=%s', (new_password, user_id))
+    elif user_type == 'patient':
+        cur.execute('UPDATE patients SET password=%s WHERE id=%s', (new_password, user_id))
+    conn.commit()
+    cur.close(); conn.close()
+    return redirect(url_for('admin_doctors_list'))
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

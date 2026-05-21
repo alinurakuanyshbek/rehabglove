@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — Edit Patient</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .sidebar-bottom { margin-top: auto; }
+        .doctor-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .doctor-name { color: white; font-weight: 600; font-size: 14px; }
+        .doctor-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
+        .logout:hover { color: var(--orange); }
+        .main { margin-left: 260px; padding: 40px; max-width: 800px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
+        .back-link:hover { color: var(--orange); }
+        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 8px; }
+        .page-subtitle { color: var(--gray); font-size: 14px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 24px; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--blue); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--orange); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; text-decoration: none; text-align: center; }
+        .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+        .hint { font-size: 12px; color: var(--gray); margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+        <a href="/dashboard" class="nav-item"><span>📊</span> Dashboard</a>
+        <div class="sidebar-bottom">
+            <div class="doctor-card">
+                <div class="doctor-name">{{ session.doctor_name }}</div>
+                <div class="doctor-role">Rehabilitation Doctor</div>
+            </div>
+            <a href="/logout" class="logout">Sign out</a>
+        </div>
+    </div>
+    <div class="main">
+        <a href="/patient/{{ patient.id }}" class="back-link">← Back to Patient</a>
+        <div class="page-title">Edit Patient</div>
+        <div class="page-subtitle">Update {{ patient.name }}'s information</div>
+        <form method="POST" action="/edit_patient/{{ patient.id }}">
+            <div class="card">
+                <div class="card-title">👤 Patient Info</div>
+                <div class="form-group"><label>Full Name</label><input type="text" name="name" value="{{ patient.name }}" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Age</label><input type="number" name="age" value="{{ patient.age }}" required></div>
+                    <div class="form-group"><label>Phone</label><input type="text" name="phone" value="{{ patient.phone or '' }}"></div>
+                </div>
+                <div class="form-group"><label>Diagnosis</label><input type="text" name="diagnosis" value="{{ patient.diagnosis or '' }}"></div>
+                <div class="form-group"><label>Address</label><input type="text" name="address" value="{{ patient.address or '' }}"></div>
+                <div class="form-group"><label>Medical History</label><textarea name="history">{{ patient.history or '' }}</textarea></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 Therapy Plan</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Sessions per day</label><input type="number" name="daily_sessions" value="{{ patient.daily_sessions }}" min="1" max="10"></div>
+                    <div class="form-group"><label>Min reps per session</label><input type="number" name="min_reps" value="{{ patient.min_reps }}" min="5" max="100"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🔐 Change Password</div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="password" placeholder="Leave empty to keep current password">
+                    <p class="hint">Username: {{ patient.username }}</p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/patient/{{ patient.id }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">Save Changes →</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
