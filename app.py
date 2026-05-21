@@ -79,6 +79,19 @@ def init_db():
             comment TEXT,
             created_at TEXT
         )''')
+
+        # Migration - add new columns
+        cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty TEXT")
+        cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS city TEXT")
+        cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS phone TEXT")
+        cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS history TEXT")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS phone TEXT")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS address TEXT")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS start_date TEXT")
+        cur.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'manual'")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS daily_sessions INTEGER DEFAULT 3")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS min_reps INTEGER DEFAULT 20")
         # Default admin
         admin_pwd = hash_password('admin123')
         cur.execute("INSERT INTO admins (username, password, name) VALUES ('admin', %s, 'Super Admin') ON CONFLICT (username) DO NOTHING", (admin_pwd,))
