@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — Smart Rehabilitation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --blue-mid: #1E4DB7; --orange: #FF6B2B; --orange-light: #FF8C55; --white: #FAFAFA; --gray: #8892A4; --light: #F4F6FB; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--blue); overflow-x: hidden; }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 20px 60px; display: flex; justify-content: space-between; align-items: center; background: rgba(10,36,99,0.95); backdrop-filter: blur(10px); }
+        .nav-logo { display: flex; align-items: center; gap: 10px; }
+        .nav-logo-icon { width: 36px; height: 36px; background: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .nav-logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .nav-logo-text span { color: var(--orange); }
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .nav-links a:hover { color: white; }
+        .nav-btn { background: var(--orange); color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .nav-btn:hover { background: var(--orange-light); }
+        .hero { min-height: 100vh; background: var(--blue); display: flex; align-items: center; padding: 120px 60px 80px; position: relative; overflow: hidden; }
+        .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 50%, rgba(255,107,43,0.15) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(30,77,183,0.3) 0%, transparent 50%); }
+        .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; }
+        .hero-content { position: relative; z-index: 1; max-width: 650px; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,107,43,0.15); border: 1px solid rgba(255,107,43,0.3); color: var(--orange); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; margin-bottom: 32px; }
+        h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(42px, 6vw, 72px); color: white; line-height: 1.05; margin-bottom: 24px; }
+        h1 span { color: var(--orange); }
+        .hero-desc { color: rgba(255,255,255,0.65); font-size: 18px; line-height: 1.7; margin-bottom: 48px; }
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn-primary { background: var(--orange); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; transition: all 0.2s; }
+        .btn-primary:hover { background: var(--orange-light); transform: translateY(-2px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; border: 1px solid rgba(255,255,255,0.15); transition: all 0.2s; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+        .hero-visual { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); width: 420px; height: 420px; }
+        .hero-circle { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 40% 40%, rgba(255,107,43,0.2), rgba(10,36,99,0.1)); border: 1px solid rgba(255,107,43,0.2); display: flex; align-items: center; justify-content: center; position: relative; }
+        .hero-glove { font-size: 140px; }
+        .hero-orbit { position: absolute; border: 1px dashed rgba(255,107,43,0.2); border-radius: 50%; animation: rotate 20s linear infinite; }
+        .hero-orbit-1 { width: 110%; height: 110%; top: -5%; left: -5%; }
+        .hero-orbit-2 { width: 130%; height: 130%; top: -15%; left: -15%; animation-duration: 30s; animation-direction: reverse; }
+        .orbit-dot { position: absolute; width: 10px; height: 10px; background: var(--orange); border-radius: 50%; top: 0; left: 50%; transform: translateX(-50%); }
+        @keyframes rotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .stats { background: var(--orange); padding: 48px 60px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
+        .stat { text-align: center; }
+        .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 42px; color: white; }
+        .stat-label { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 4px; }
+        .section { padding: 100px 60px; }
+        .section-tag { color: var(--orange); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+        .section-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(32px, 4vw, 48px); margin-bottom: 16px; }
+        .section-desc { color: var(--gray); font-size: 17px; max-width: 600px; line-height: 1.7; margin-bottom: 64px; }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+        .step { background: var(--light); border-radius: 24px; padding: 40px 32px; position: relative; overflow: hidden; transition: transform 0.2s; }
+        .step:hover { transform: translateY(-4px); }
+        .step-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 80px; color: rgba(10,36,99,0.06); position: absolute; top: 16px; right: 24px; line-height: 1; }
+        .step-icon { font-size: 40px; margin-bottom: 20px; }
+        .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 12px; }
+        .step-desc { color: var(--gray); font-size: 15px; line-height: 1.7; }
+        .features-section { background: var(--blue); padding: 100px 60px; }
+        .features-section .section-title { color: white; }
+        .features-section .section-desc { color: rgba(255,255,255,0.6); }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .feature-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 32px; transition: all 0.2s; }
+        .feature-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,107,43,0.3); }
+        .feature-icon { font-size: 36px; margin-bottom: 16px; }
+        .feature-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: white; margin-bottom: 10px; }
+        .feature-desc { color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.7; }
+        .forwho { padding: 100px 60px; background: var(--light); }
+        .forwho-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .forwho-card { background: white; border-radius: 24px; padding: 48px 40px; box-shadow: 0 4px 24px rgba(10,36,99,0.08); }
+        .forwho-icon { font-size: 48px; margin-bottom: 24px; }
+        .forwho-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; margin-bottom: 16px; }
+        .forwho-desc { color: var(--gray); font-size: 15px; line-height: 1.8; margin-bottom: 24px; }
+        .forwho-list { list-style: none; }
+        .forwho-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--blue); padding: 8px 0; border-bottom: 1px solid #F0F2F8; }
+        .forwho-list li:last-child { border-bottom: none; }
+        .forwho-list li::before { content: '✓'; color: var(--orange); font-weight: 700; }
+        .contact { padding: 100px 60px; text-align: center; }
+        .contact-box { background: var(--blue); border-radius: 32px; padding: 80px 60px; position: relative; overflow: hidden; }
+        .contact-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(255,107,43,0.2) 0%, transparent 50%); }
+        .contact-box .section-tag, .contact-box .section-title, .contact-box .section-desc { position: relative; }
+        .contact-box .section-title { color: white; }
+        .contact-box .section-desc { color: rgba(255,255,255,0.6); margin: 0 auto 48px; }
+        .contact-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; }
+        .btn-whatsapp { display: inline-flex; align-items: center; gap: 10px; background: #25D366; color: white; padding: 18px 36px; border-radius: 12px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; transition: all 0.2s; }
+        .btn-whatsapp:hover { background: #1fb855; transform: translateY(-2px); }
+        .btn-login-white { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); color: white; padding: 18px 36px; border-radius: 12px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.2s; }
+        .btn-login-white:hover { background: rgba(255,255,255,0.2); }
+        footer { background: var(--blue); border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 60px; display: flex; justify-content: space-between; align-items: center; }
+        .footer-logo { display: flex; align-items: center; gap: 10px; }
+        .footer-logo-icon { width: 32px; height: 32px; background: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .footer-logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: white; }
+        .footer-logo-text span { color: var(--orange); }
+        .footer-text { color: rgba(255,255,255,0.4); font-size: 13px; }
+        @media (max-width: 768px) { nav { padding: 16px 24px; } .nav-links { display: none; } .hero { padding: 100px 24px 60px; } .hero-visual { display: none; } .stats { grid-template-columns: repeat(2, 1fr); padding: 40px 24px; } .section { padding: 60px 24px; } .steps { grid-template-columns: 1fr; } .features-section { padding: 60px 24px; } .features-grid { grid-template-columns: 1fr; } .forwho { padding: 60px 24px; } .forwho-grid { grid-template-columns: 1fr; } .contact { padding: 60px 24px; } .contact-box { padding: 48px 24px; } footer { padding: 32px 24px; flex-direction: column; gap: 16px; text-align: center; } }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="nav-logo"><div class="nav-logo-icon">🖐</div><div class="nav-logo-text">Rehab<span>Glove</span></div></div>
+    <div class="nav-links"><a href="#how">How it works</a><a href="#features">Features</a><a href="#who">For who</a><a href="#contact">Contact</a></div>
+    <a href="/login" class="nav-btn">Sign In →</a>
+</nav>
+<section class="hero">
+    <div class="hero-bg"></div><div class="hero-grid"></div>
+    <div class="hero-content">
+        <div class="hero-badge">● Voice-Controlled Rehabilitation</div>
+        <h1>Restore <span>Hand Function</span> After Stroke</h1>
+        <p class="hero-desc">Smart rehabilitation glove powered by AI voice recognition. Patients recover at home, doctors monitor progress in real-time — anywhere, anytime.</p>
+        <div class="hero-actions"><a href="#contact" class="btn-primary">Get Consultation →</a><a href="#how" class="btn-secondary">How it works</a></div>
+    </div>
+    <div class="hero-visual"><div class="hero-circle"><div class="hero-orbit hero-orbit-1"><div class="orbit-dot"></div></div><div class="hero-orbit hero-orbit-2"><div class="orbit-dot"></div></div><div class="hero-glove">🖐</div></div></div>
+</section>
+<div class="stats">
+    <div class="stat"><div class="stat-num">15+</div><div class="stat-label">Minutes per session</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Voice therapy modes</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Offline capable</div></div>
+    <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Progress monitoring</div></div>
+</div>
+<section class="section" id="how">
+    <div class="section-tag">How it works</div>
+    <h2 class="section-title">Simple. Safe. Effective.</h2>
+    <p class="section-desc">Three steps from setup to recovery.</p>
+    <div class="steps">
+        <div class="step"><div class="step-num">01</div><div class="step-icon">🧤</div><div class="step-title">Put on the glove</div><div class="step-desc">Wear the lightweight rehabilitation glove on the affected hand. Powered by a portable battery — no cables needed.</div></div>
+        <div class="step"><div class="step-num">02</div><div class="step-icon">🎙</div><div class="step-title">Speak a command</div><div class="step-desc">Say "Open" or "Close" — the AI voice recognition works offline. Choose therapy mode: 5, 10, or 15 minutes.</div></div>
+        <div class="step"><div class="step-num">03</div><div class="step-icon">📊</div><div class="step-title">Track progress</div><div class="step-desc">Session data syncs to the dashboard automatically. Doctor monitors compliance and adjusts the therapy plan remotely.</div></div>
+    </div>
+</section>
+<section class="features-section" id="features">
+    <div class="section-tag">Features</div>
+    <h2 class="section-title">Built for real rehabilitation</h2>
+    <p class="section-desc">Every feature designed with stroke patients and rehabilitation specialists in mind.</p>
+    <div class="features-grid">
+        <div class="feature-card"><div class="feature-icon">🎙</div><div class="feature-title">Offline Voice Control</div><div class="feature-desc">Vosk AI recognizes commands without internet. Works in rural areas and hospitals with poor connectivity.</div></div>
+        <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Doctor Dashboard</div><div class="feature-desc">Real-time monitoring of all patients. Compliance tracking, session history, and therapy plan management.</div></div>
+        <div class="feature-card"><div class="feature-icon">🔋</div><div class="feature-title">Fully Portable</div><div class="feature-desc">12V portable battery powers the device for hours. Use at home, in transport, or outdoors.</div></div>
+        <div class="feature-card"><div class="feature-icon">🛡</div><div class="feature-title">Safety First</div><div class="feature-desc">Emergency stop button and automatic stop on resistance detection keep patients safe.</div></div>
+        <div class="feature-card"><div class="feature-icon">☁️</div><div class="feature-title">Auto Sync</div><div class="feature-desc">When Wi-Fi is available, all offline sessions sync automatically to the cloud dashboard.</div></div>
+        <div class="feature-card"><div class="feature-icon">🎯</div><div class="feature-title">Therapy Modes</div><div class="feature-desc">Three automatic modes (5, 10, 15 min) plus manual control. Doctor sets daily goals for each patient.</div></div>
+    </div>
+</section>
+<section class="forwho" id="who">
+    <div class="section-tag">For who</div>
+    <h2 class="section-title">Designed for everyone involved</h2>
+    <p class="section-desc">RehabGlove serves both patients recovering at home and doctors managing rehabilitation remotely.</p>
+    <div class="forwho-grid">
+        <div class="forwho-card"><div class="forwho-icon">🧑‍⚕️</div><div class="forwho-title">For Doctors</div><div class="forwho-desc">Manage your patients' rehabilitation remotely with full visibility into their progress and compliance.</div><ul class="forwho-list"><li>Monitor all patients from one dashboard</li><li>Set individual therapy plans and goals</li><li>Track compliance — who's doing exercises</li><li>View session history and progress charts</li><li>Get alerts for low-compliance patients</li></ul></div>
+        <div class="forwho-card"><div class="forwho-icon">🧑</div><div class="forwho-title">For Patients</div><div class="forwho-desc">Recover at home with a simple voice-controlled device. No tech knowledge required.</div><ul class="forwho-list"><li>Just say "Open" or "Close" to exercise</li><li>See your daily goal and progress</li><li>Three automatic therapy durations</li><li>Works without internet connection</li><li>Emergency stop button always available</li></ul></div>
+    </div>
+</section>
+<section class="contact" id="contact">
+    <div class="contact-box">
+        <div class="contact-bg"></div>
+        <div class="section-tag">Get started</div>
+        <h2 class="section-title">Ready to start rehabilitation?</h2>
+        <p class="section-desc">Contact us on WhatsApp to get a consultation or request a demo.</p>
+        <div class="contact-actions">
+            <a href="https://wa.me/87777692151" target="_blank" class="btn-whatsapp"><span>💬</span> WhatsApp Us</a>
+            <a href="/login" class="btn-login-white">Sign In to Dashboard →</a>
+        </div>
+    </div>
+</section>
+<footer>
+    <div class="footer-logo"><div class="footer-logo-icon">🖐</div><div class="footer-logo-text">Rehab<span>Glove</span></div></div>
+    <div class="footer-text">© 2026 RehabGlove · Astana IT University · Smart Technologies</div>
+</footer>
+</body>
+</html>

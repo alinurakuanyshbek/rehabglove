@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; }
         body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
         .header { background: var(--blue); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
         .logo { display: flex; align-items: center; gap: 10px; }
@@ -17,9 +17,20 @@
         .logo-text span { color: var(--orange); }
         .logout { color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; }
         .logout:hover { color: var(--orange); }
-        .main { padding: 40px; max-width: 900px; margin: 0 auto; }
+        .main { padding: 40px; max-width: 960px; margin: 0 auto; }
         .welcome { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; margin-bottom: 8px; }
         .subtitle { color: var(--gray); margin-bottom: 32px; }
+        .goal-card { background: var(--blue); border-radius: 24px; padding: 36px; margin-bottom: 32px; position: relative; overflow: hidden; }
+        .goal-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 50%, rgba(255,107,43,0.2), transparent 60%); }
+        .goal-content { position: relative; z-index: 1; }
+        .goal-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .goal-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: white; margin-bottom: 24px; }
+        .goal-progress { background: rgba(255,255,255,0.1); border-radius: 12px; height: 16px; overflow: hidden; margin-bottom: 16px; }
+        .goal-fill { height: 100%; border-radius: 12px; background: var(--orange); }
+        .goal-stats { display: flex; justify-content: space-between; align-items: center; }
+        .goal-stat { color: rgba(255,255,255,0.7); font-size: 14px; }
+        .goal-stat span { color: white; font-weight: 600; }
+        .compliance-pct { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 40px; color: white; }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
         .stat-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); }
         .stat-icon { font-size: 28px; margin-bottom: 12px; }
@@ -34,62 +45,64 @@
         .sessions-table td { padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
         .sessions-table tr:last-child td { border-bottom: none; }
         .rep-badge { background: #EEF2FF; color: #1E4DB7; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; }
+        .mode-badge { background: #F4F6FB; color: var(--gray); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
         .empty { text-align: center; padding: 40px; color: var(--gray); }
         .diagnosis-badge { background: #FFF0EC; color: var(--orange); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; display: inline-block; margin-bottom: 32px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">
-            <div class="logo-icon">🖐</div>
-            <div class="logo-text">Rehab<span>Glove</span></div>
-        </div>
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
         <a href="/logout" class="logout">Sign out</a>
     </div>
     <div class="main">
-        <div class="welcome">Welcome, {{ patient.name }}!</div>
-        <p class="subtitle">Track your rehabilitation progress</p>
+        <div class="welcome">Welcome, {{ patient.name }}! 👋</div>
+        <p class="subtitle">Here's your rehabilitation progress</p>
         <span class="diagnosis-badge">{{ patient.diagnosis }}</span>
+        <div class="goal-card">
+            <div class="goal-bg"></div>
+            <div class="goal-content">
+                <div class="goal-label">Today's Goal from your doctor</div>
+                <div class="goal-text">{{ patient.daily_sessions }} sessions · {{ patient.min_reps }} reps minimum each</div>
+                <div class="goal-progress"><div class="goal-fill" style="width: {{ compliance }}%"></div></div>
+                <div class="goal-stats">
+                    <div>
+                        <div class="goal-stat">Sessions done: <span>{{ today_stats.cnt }}/{{ patient.daily_sessions }}</span></div>
+                        <div class="goal-stat" style="margin-top:4px">Reps today: <span>{{ today_stats.reps }}</span></div>
+                    </div>
+                    <div class="compliance-pct">{{ compliance }}%</div>
+                </div>
+            </div>
+        </div>
         {% set total_reps = sessions|sum(attribute='repetitions') %}
         {% set total_min = sessions|sum(attribute='duration') %}
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">🔄</div>
-                <div class="stat-label">Total Sessions</div>
-                <div class="stat-value orange">{{ sessions|length }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✊</div>
-                <div class="stat-label">Total Repetitions</div>
-                <div class="stat-value">{{ total_reps }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⏱</div>
-                <div class="stat-label">Total Minutes</div>
-                <div class="stat-value">{{ total_min }}</div>
-            </div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-label">Total Sessions</div><div class="stat-value orange">{{ sessions|length }}</div></div>
+            <div class="stat-card"><div class="stat-icon">✊</div><div class="stat-label">Total Repetitions</div><div class="stat-value">{{ total_reps }}</div></div>
+            <div class="stat-card"><div class="stat-icon">⏱</div><div class="stat-label">Total Minutes</div><div class="stat-value">{{ total_min }}</div></div>
         </div>
         <div class="card">
-            <div class="card-title">📊 My Progress</div>
+            <div class="card-title">📊 Progress Chart</div>
             <div class="chart-container"><canvas id="progressChart"></canvas></div>
         </div>
         <div class="card">
             <div class="card-title">🕐 Session History</div>
             {% if sessions %}
             <table class="sessions-table">
-                <thead><tr><th>Date</th><th>Repetitions</th><th>Duration</th></tr></thead>
+                <thead><tr><th>Date</th><th>Repetitions</th><th>Duration</th><th>Mode</th></tr></thead>
                 <tbody>
                     {% for s in sessions %}
                     <tr>
                         <td>{{ s.date }}</td>
                         <td><span class="rep-badge">{{ s.repetitions }} reps</span></td>
                         <td>{{ s.duration }} min</td>
+                        <td><span class="mode-badge">{{ s.mode or 'manual' }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             {% else %}
-            <div class="empty">No sessions yet. Start your rehabilitation!</div>
+            <div class="empty">No sessions yet. Put on your glove and start! 🖐</div>
             {% endif %}
         </div>
     </div>
@@ -98,9 +111,9 @@
         const labels = sessions.map(s => s.date ? s.date.slice(5,16) : '').reverse();
         const reps = sessions.map(s => s.repetitions).reverse();
         new Chart(document.getElementById('progressChart'), {
-            type: 'line',
-            data: { labels: labels, datasets: [{ label: 'Repetitions', data: reps, borderColor: '#FF6B2B', backgroundColor: 'rgba(255,107,43,0.1)', borderWidth: 2, fill: true, tension: 0.4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Repetitions', data: reps, backgroundColor: '#FF6B2B', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#E8ECF4' } }, x: { grid: { display: false } } } }
         });
     </script>
 </body>

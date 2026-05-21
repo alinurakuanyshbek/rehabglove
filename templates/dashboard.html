@@ -7,102 +7,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --blue: #0A2463;
-            --blue-mid: #1E4DB7;
-            --blue-light: #EEF2FF;
-            --orange: #FF6B2B;
-            --orange-light: #FFF0EC;
-            --white: #FAFAFA;
-            --gray: #8892A4;
-            --border: #E8ECF4;
-        }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; --red: #EF4444; --yellow: #F59E0B; }
         body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
-        
-        /* Sidebar */
-        .sidebar {
-            position: fixed; left: 0; top: 0; bottom: 0; width: 260px;
-            background: var(--blue);
-            padding: 32px 24px;
-            display: flex; flex-direction: column;
-        }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
         .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
         .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
         .logo-text span { color: var(--orange); }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
         .nav-item.active { background: rgba(255,107,43,0.15); color: var(--orange); }
         .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
-        .nav-icon { font-size: 18px; }
         .sidebar-bottom { margin-top: auto; }
         .doctor-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
         .doctor-name { color: white; font-weight: 600; font-size: 14px; }
         .doctor-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
         .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
         .logout:hover { color: var(--orange); }
-
-        /* Main */
         .main { margin-left: 260px; padding: 40px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; color: var(--blue); }
+        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; }
         .page-subtitle { color: var(--gray); font-size: 14px; margin-top: 4px; }
-        
-        /* Stats */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
         .stat-card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); }
-        .stat-label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); margin-bottom: 12px; }
-        .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: var(--blue); }
-        .stat-value.orange { color: var(--orange); }
         .stat-icon { font-size: 32px; margin-bottom: 16px; }
-
-        /* Add patient button */
-        .add-btn {
-            background: var(--orange); color: white; border: none;
-            padding: 14px 24px; border-radius: 12px;
-            font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px;
-            cursor: pointer; transition: all 0.2s;
-        }
+        .stat-label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); margin-bottom: 12px; }
+        .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; }
+        .stat-value.orange { color: var(--orange); }
+        .add-btn { background: var(--orange); color: white; border: none; padding: 14px 24px; border-radius: 12px; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .add-btn:hover { background: #FF8C55; transform: translateY(-1px); }
-
-        /* Patients */
         .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 20px; }
-        .patients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .patient-card {
-            background: white; border-radius: 20px; padding: 24px;
-            box-shadow: 0 2px 12px rgba(10,36,99,0.06);
-            text-decoration: none; color: inherit;
-            transition: all 0.2s; border: 2px solid transparent;
-            display: block;
-        }
-        .patient-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10,36,99,0.12); }
-        .patient-avatar {
-            width: 48px; height: 48px; border-radius: 14px;
-            background: var(--blue-light); display: flex; align-items: center; justify-content: center;
-            font-size: 22px; margin-bottom: 16px;
-        }
+        .patients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .patient-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); text-decoration: none; color: inherit; transition: all 0.2s; border-left: 4px solid transparent; display: block; }
+        .patient-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10,36,99,0.12); }
+        .patient-card.red { border-left-color: var(--red); }
+        .patient-card.yellow { border-left-color: var(--yellow); }
+        .patient-card.green { border-left-color: var(--green); }
+        .patient-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .patient-avatar { width: 48px; height: 48px; border-radius: 14px; background: #EEF2FF; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .compliance-badge { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; }
+        .compliance-badge.red { color: var(--red); }
+        .compliance-badge.yellow { color: var(--yellow); }
+        .compliance-badge.green { color: var(--green); }
         .patient-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 4px; }
         .patient-age { color: var(--gray); font-size: 13px; margin-bottom: 12px; }
-        .patient-diagnosis {
-            background: var(--orange-light); color: var(--orange);
-            padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;
-            display: inline-block;
-        }
+        .patient-diagnosis { background: #FFF0EC; color: var(--orange); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; display: inline-block; margin-bottom: 16px; }
+        .progress-bar { background: #F0F2F8; border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 8px; }
+        .progress-fill { height: 100%; border-radius: 8px; }
+        .progress-fill.red { background: var(--red); }
+        .progress-fill.yellow { background: var(--yellow); }
+        .progress-fill.green { background: var(--green); }
+        .progress-label { font-size: 12px; color: var(--gray); margin-bottom: 12px; }
+        .today-stats { display: flex; gap: 16px; }
+        .today-stat { font-size: 12px; color: var(--gray); }
+        .today-stat span { font-weight: 600; color: var(--blue); }
         .empty-state { text-align: center; padding: 60px; color: var(--gray); }
         .empty-icon { font-size: 48px; margin-bottom: 16px; }
-
-        /* Modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,36,99,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
-        .modal { background: white; border-radius: 24px; padding: 40px; width: 480px; }
+        .modal { background: white; border-radius: 24px; padding: 40px; width: 520px; max-height: 90vh; overflow-y: auto; }
         .modal h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 24px; margin-bottom: 24px; }
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--blue); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-group input, .form-group textarea {
-            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
-            border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif;
-            outline: none; transition: border-color 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--orange); }
+        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus { border-color: var(--orange); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--blue); margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
         .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
         .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; }
         .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
@@ -110,11 +79,8 @@
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo">
-            <div class="logo-icon">🖐</div>
-            <div class="logo-text">Rehab<span>Glove</span></div>
-        </div>
-        <a href="/dashboard" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+        <a href="/dashboard" class="nav-item active"><span>📊</span> Dashboard</a>
         <div class="sidebar-bottom">
             <div class="doctor-card">
                 <div class="doctor-name">{{ session.doctor_name }}</div>
@@ -123,86 +89,61 @@
             <a href="/logout" class="logout">Sign out</a>
         </div>
     </div>
-
     <div class="main">
         <div class="header">
-            <div>
-                <div class="page-title">Dashboard</div>
-                <div class="page-subtitle">Monitor your patients' rehabilitation progress</div>
-            </div>
+            <div><div class="page-title">Dashboard</div><div class="page-subtitle">Today's patient compliance overview</div></div>
             <button class="add-btn" onclick="document.querySelector('.modal-overlay').classList.add('active')">+ Add Patient</button>
         </div>
-
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-label">Total Patients</div>
-                <div class="stat-value">{{ patients|length }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔄</div>
-                <div class="stat-label">Total Sessions</div>
-                <div class="stat-value orange">{{ stats.total_sessions or 0 }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✊</div>
-                <div class="stat-label">Total Repetitions</div>
-                <div class="stat-value">{{ stats.total_reps or 0 }}</div>
-            </div>
+            <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Total Patients</div><div class="stat-value">{{ patients|length }}</div></div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-label">Total Sessions</div><div class="stat-value orange">{{ stats.total_sessions or 0 }}</div></div>
+            <div class="stat-card"><div class="stat-icon">✊</div><div class="stat-label">Total Repetitions</div><div class="stat-value">{{ stats.total_reps or 0 }}</div></div>
         </div>
-
-        <div class="section-title">Your Patients</div>
+        <div class="section-title">Patients — Today's Compliance</div>
         {% if patients %}
         <div class="patients-grid">
             {% for p in patients %}
-            <a href="/patient/{{ p.id }}" class="patient-card">
-                <div class="patient-avatar">🧑‍⚕️</div>
+            {% set color = 'red' if p.compliance < 50 else ('yellow' if p.compliance < 80 else 'green') %}
+            <a href="/patient/{{ p.id }}" class="patient-card {{ color }}">
+                <div class="patient-header">
+                    <div class="patient-avatar">🧑‍⚕️</div>
+                    <div class="compliance-badge {{ color }}">{{ p.compliance }}%</div>
+                </div>
                 <div class="patient-name">{{ p.name }}</div>
                 <div class="patient-age">Age {{ p.age }}</div>
                 <span class="patient-diagnosis">{{ p.diagnosis }}</span>
+                <div class="progress-bar"><div class="progress-fill {{ color }}" style="width: {{ p.compliance }}%"></div></div>
+                <div class="progress-label">Daily compliance · Goal: {{ p.daily_sessions }} sessions/day</div>
+                <div class="today-stats">
+                    <div class="today-stat">Sessions: <span>{{ p.today_sessions }}/{{ p.daily_sessions }}</span></div>
+                    <div class="today-stat">Reps: <span>{{ p.today_reps }}</span></div>
+                </div>
             </a>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">👥</div>
-            <p>No patients yet. Add your first patient!</p>
-        </div>
+        <div class="empty-state"><div class="empty-icon">👥</div><p>No patients yet. Add your first patient!</p></div>
         {% endif %}
     </div>
-
-    <!-- Modal -->
     <div class="modal-overlay">
         <div class="modal">
             <h2>Add New Patient</h2>
             <form method="POST" action="/add_patient">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" name="name" placeholder="Patient full name" required>
+                <div class="form-section-title">Patient Info</div>
+                <div class="form-group"><label>Full Name</label><input type="text" name="name" placeholder="Patient full name" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Age</label><input type="number" name="age" placeholder="Age" required></div>
+                    <div class="form-group"><label>Diagnosis</label><input type="text" name="diagnosis" placeholder="e.g. Post-stroke"></div>
                 </div>
-                <div class="form-group">
-                    <label>Age</label>
-                    <input type="number" name="age" placeholder="Age" required>
+                <div class="form-section-title">Login Credentials</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Username</label><input type="text" name="username" placeholder="e.g. patient_john" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Set password" required></div>
                 </div>
-                <div class="form-group">
-                    <label>Username (for patient login)</label>
-                    <input type="text" name="username" placeholder="e.g. patient_john" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Set a password" required>
-                </div>
-                <div class="form-group">
-                    <label>Username (for patient login)</label>
-                    <input type="text" name="username" placeholder="e.g. patient_john" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Set a password" required>
-                </div>
-                <div class="form-group">
-                    <label>Diagnosis</label>
-                    <input type="text" name="diagnosis" placeholder="e.g. Post-stroke rehabilitation">
+                <div class="form-section-title">Therapy Plan</div>
+                <div class="form-row">
+                    <div class="form-group"><label>Sessions per day</label><input type="number" name="daily_sessions" value="3" min="1" max="10"></div>
+                    <div class="form-group"><label>Min reps per session</label><input type="number" name="min_reps" value="20" min="5" max="100"></div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="document.querySelector('.modal-overlay').classList.remove('active')">Cancel</button>
