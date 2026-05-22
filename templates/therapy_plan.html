@@ -9,7 +9,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; }
         body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s; }
+        .sidebar.hidden { transform: translateX(-260px); }
         .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
         .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
@@ -22,7 +23,9 @@
         .doctor-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
         .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
         .logout:hover { color: var(--orange); }
-        .main { margin-left: 260px; padding: 40px; max-width: 900px; }
+        .burger { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--blue); border: none; border-radius: 10px; padding: 10px; cursor: pointer; font-size: 20px; color: white; }
+        .main { margin-left: 260px; padding: 40px; max-width: 900px; transition: margin-left 0.3s; }
+        .main.full { margin-left: 0; }
         .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
         .back-link:hover { color: var(--orange); }
         .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 8px; }
@@ -33,31 +36,40 @@
         .day-row:last-child { border-bottom: none; }
         .day-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 16px; }
         .options-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-        .option-block { border: 2px solid var(--border); border-radius: 14px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; background: white; min-width: 140px; }
-        .option-block.selected-rest { border-color: var(--gray); background: #F4F6FB; }
-        .option-block.selected-opt1 { border-color: var(--orange); background: #FFF0EC; }
-        .option-block.selected-opt2 { border-color: #1E4DB7; background: #EEF2FF; }
-        .option-block.selected-opt3 { border-color: var(--green); background: #D1FAE5; }
-        .option-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .option-block { border: 2px solid var(--border); border-radius: 14px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; background: white; min-width: 130px; user-select: none; }
+        .option-block.active-rest { border-color: var(--gray); background: #F4F6FB; }
+        .option-block.active-opt1 { border-color: var(--orange); background: #FFF0EC; }
+        .option-block.active-opt2 { border-color: #1E4DB7; background: #EEF2FF; }
+        .option-block.active-opt3 { border-color: var(--green); background: #D1FAE5; }
+        .option-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
         .option-emoji { font-size: 18px; }
         .option-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; }
         .option-duration { font-size: 11px; color: var(--gray); }
-        .counter { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-        .counter-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--border); background: white; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .counter { display: none; align-items: center; gap: 6px; margin-top: 8px; }
+        .counter.show { display: flex; }
+        .counter-btn { width: 26px; height: 26px; border-radius: 6px; border: 2px solid var(--border); background: white; cursor: pointer; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1; }
         .counter-btn:hover { border-color: var(--orange); color: var(--orange); }
-        .counter-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; min-width: 24px; text-align: center; }
+        .counter-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; min-width: 20px; text-align: center; }
         .counter-label { font-size: 11px; color: var(--gray); }
-        .hidden-input { display: none; }
         .form-actions { display: flex; gap: 12px; margin-top: 8px; }
         .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; text-decoration: none; text-align: center; }
         .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
         .legend { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray); }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-260px); }
+            .sidebar.open { transform: translateX(0); }
+            .burger { display: block; }
+            .main { margin-left: 0; padding: 24px 16px; padding-top: 60px; }
+            .options-grid { flex-direction: column; }
+            .option-block { min-width: unset; }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar" id="sidebar">
         <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
         <a href="/dashboard" class="nav-item"><span>📊</span> Dashboard</a>
         <div class="sidebar-bottom">
@@ -68,7 +80,7 @@
             <a href="/logout" class="logout">Sign out</a>
         </div>
     </div>
-    <div class="main">
+    <div class="main" id="main">
         <a href="/patient/{{ patient.id }}" class="back-link">← Back to Patient</a>
         <div class="page-title">Therapy Plan</div>
         <div class="page-subtitle">Set weekly schedule for {{ patient.name }}</div>
@@ -96,25 +108,31 @@
                     <input type="hidden" name="{{ day_key }}" id="plan_{{ day_key }}" value="{{ current_plan }}">
                     <input type="hidden" name="{{ day_key }}_count" id="count_{{ day_key }}" value="{{ current_count }}">
                     <div class="options-grid">
-                        {% for opt_key, emoji, opt_name, duration in [('rest','😴','Rest',''), ('option1','⚡','Option 1','5 min'), ('option2','🔥','Option 2','15 min'), ('option3','💪','Option 3','20 min')] %}
-                        <div class="option-block {{ 'selected-' + opt_key if current_plan == opt_key else '' }}"
+                        <div class="option-block {{ 'active-rest' if current_plan == 'rest' or not current_plan }}"
+                             id="block_{{ day_key }}_rest"
+                             onclick="selectOption('{{ day_key }}', 'rest')">
+                            <div class="option-top">
+                                <span class="option-emoji">😴</span>
+                                <div><div class="option-name">Rest Day</div></div>
+                            </div>
+                        </div>
+                        {% for opt_key, emoji, opt_name, duration in [('option1','⚡','Option 1','5 min'), ('option2','🔥','Option 2','15 min'), ('option3','💪','Option 3','20 min')] %}
+                        <div class="option-block {{ 'active-' + opt_key if current_plan == opt_key }}"
                              id="block_{{ day_key }}_{{ opt_key }}"
                              onclick="selectOption('{{ day_key }}', '{{ opt_key }}')">
                             <div class="option-top">
                                 <span class="option-emoji">{{ emoji }}</span>
                                 <div>
                                     <div class="option-name">{{ opt_name }}</div>
-                                    {% if duration %}<div class="option-duration">{{ duration }}</div>{% endif %}
+                                    <div class="option-duration">{{ duration }}</div>
                                 </div>
                             </div>
-                            {% if opt_key != 'rest' %}
-                            <div class="counter" id="counter_{{ day_key }}_{{ opt_key }}" style="{{ 'display:flex' if current_plan == opt_key else 'display:none' }}">
-                                <button type="button" class="counter-btn" onclick="event.stopPropagation(); changeCount('{{ day_key }}', -1)">−</button>
-                                <span class="counter-val" id="val_{{ day_key }}">{{ current_count }}</span>
-                                <button type="button" class="counter-btn" onclick="event.stopPropagation(); changeCount('{{ day_key }}', 1)">+</button>
+                            <div class="counter {{ 'show' if current_plan == opt_key }}" id="counter_{{ day_key }}_{{ opt_key }}">
+                                <button type="button" class="counter-btn" onclick="event.stopPropagation(); changeCount('{{ day_key }}', '{{ opt_key }}', -1)">−</button>
+                                <span class="counter-val" id="val_{{ day_key }}_{{ opt_key }}">{{ current_count if current_plan == opt_key else 1 }}</span>
+                                <button type="button" class="counter-btn" onclick="event.stopPropagation(); changeCount('{{ day_key }}', '{{ opt_key }}', 1)">+</button>
                                 <span class="counter-label">times</span>
                             </div>
-                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -132,18 +150,31 @@
             document.getElementById('plan_' + day).value = opt;
             ['rest','option1','option2','option3'].forEach(o => {
                 const block = document.getElementById('block_' + day + '_' + o);
-                block.className = 'option-block' + (o === opt ? ' selected-' + o : '');
-                const counter = document.getElementById('counter_' + day + '_' + o);
-                if (counter) counter.style.display = (o === opt ? 'flex' : 'none');
+                if (block) {
+                    block.className = 'option-block' + (o === opt ? ' active-' + o : '');
+                }
+                if (o !== 'rest') {
+                    const counter = document.getElementById('counter_' + day + '_' + o);
+                    if (counter) counter.className = 'counter' + (o === opt ? ' show' : '');
+                }
             });
+            if (opt !== 'rest') {
+                const val = document.getElementById('val_' + day + '_' + opt);
+                const countInput = document.getElementById('count_' + day);
+                if (val) countInput.value = val.textContent;
+            }
         }
-        function changeCount(day, delta) {
-            const input = document.getElementById('count_' + day);
-            const val = document.getElementById('val_' + day);
-            let current = parseInt(input.value) || 1;
+        function changeCount(day, opt, delta) {
+            const val = document.getElementById('val_' + day + '_' + opt);
+            const countInput = document.getElementById('count_' + day);
+            let current = parseInt(val.textContent) || 1;
             current = Math.max(1, Math.min(10, current + delta));
-            input.value = current;
             val.textContent = current;
+            countInput.value = current;
+        }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
         }
     </script>
 </body>
