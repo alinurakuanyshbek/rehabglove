@@ -113,6 +113,14 @@ def init_db():
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_plan TEXT DEFAULT 'option1'")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_plan TEXT DEFAULT 'rest'")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_plan TEXT DEFAULT 'rest'")
+
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS mon_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS tue_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS wed_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS thu_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_note TEXT DEFAULT ''")
+        cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_note TEXT DEFAULT ''")
         # Migration - add new columns
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty TEXT")
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS city TEXT")
@@ -476,7 +484,9 @@ def therapy_plan(patient_id):
             mon_plan=%s, tue_plan=%s, wed_plan=%s, thu_plan=%s,
             fri_plan=%s, sat_plan=%s, sun_plan=%s,
             mon_sessions=%s, tue_sessions=%s, wed_sessions=%s, thu_sessions=%s,
-            fri_sessions=%s, sat_sessions=%s, sun_sessions=%s
+            fri_sessions=%s, sat_sessions=%s, sun_sessions=%s,
+            mon_note=%s, tue_note=%s, wed_note=%s, thu_note=%s,
+            fri_note=%s, sat_note=%s, sun_note=%s
             WHERE id=%s''',
             (request.form.get('mon', 'rest'), request.form.get('tue', 'rest'),
              request.form.get('wed', 'rest'), request.form.get('thu', 'rest'),
@@ -485,7 +495,11 @@ def therapy_plan(patient_id):
              int(request.form.get('mon_count', 1)), int(request.form.get('tue_count', 1)),
              int(request.form.get('wed_count', 1)), int(request.form.get('thu_count', 1)),
              int(request.form.get('fri_count', 1)), int(request.form.get('sat_count', 1)),
-             int(request.form.get('sun_count', 1)), patient_id))
+             int(request.form.get('sun_count', 1)),
+             request.form.get('mon_note', ''), request.form.get('tue_note', ''),
+             request.form.get('wed_note', ''), request.form.get('thu_note', ''),
+             request.form.get('fri_note', ''), request.form.get('sat_note', ''),
+             request.form.get('sun_note', ''), patient_id))
         conn.commit()
         cur2.close(); conn.close()
         return redirect(url_for('patient', patient_id=patient_id))

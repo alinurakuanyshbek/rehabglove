@@ -94,15 +94,15 @@
             <div class="card">
                 <div class="card-title">📅 Weekly Schedule</div>
                 {% set days = [
-                    ('Monday', 'mon', patient.mon_plan or 'rest', patient.mon_sessions or 1),
-                    ('Tuesday', 'tue', patient.tue_plan or 'rest', patient.tue_sessions or 1),
-                    ('Wednesday', 'wed', patient.wed_plan or 'rest', patient.wed_sessions or 1),
-                    ('Thursday', 'thu', patient.thu_plan or 'rest', patient.thu_sessions or 1),
-                    ('Friday', 'fri', patient.fri_plan or 'rest', patient.fri_sessions or 1),
-                    ('Saturday', 'sat', patient.sat_plan or 'rest', patient.sat_sessions or 1),
-                    ('Sunday', 'sun', patient.sun_plan or 'rest', patient.sun_sessions or 1)
+                    ('Monday', 'mon', patient.mon_plan or 'rest', patient.mon_sessions or 1, patient.mon_note or ''),
+                    ('Tuesday', 'tue', patient.tue_plan or 'rest', patient.tue_sessions or 1, patient.tue_note or ''),
+                    ('Wednesday', 'wed', patient.wed_plan or 'rest', patient.wed_sessions or 1, patient.wed_note or ''),
+                    ('Thursday', 'thu', patient.thu_plan or 'rest', patient.thu_sessions or 1, patient.thu_note or ''),
+                    ('Friday', 'fri', patient.fri_plan or 'rest', patient.fri_sessions or 1, patient.fri_note or ''),
+                    ('Saturday', 'sat', patient.sat_plan or 'rest', patient.sat_sessions or 1, patient.sat_note or ''),
+                    ('Sunday', 'sun', patient.sun_plan or 'rest', patient.sun_sessions or 1, patient.sun_note or '')
                 ] %}
-                {% for day_name, day_key, current_plan, current_count in days %}
+                {% for day_name, day_key, current_plan, current_count, current_note in days %}
                 <div class="day-row">
                     <div class="day-name">{{ day_name }}</div>
                     <input type="hidden" name="{{ day_key }}" id="plan_{{ day_key }}" value="{{ current_plan }}">
@@ -135,6 +135,12 @@
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                    <div style="margin-top:12px;">
+                        <input type="text" name="{{ day_key }}_note" value="{{ current_note }}"
+                               placeholder="Doctor's note for {{ day_name }} (visible to patient)..."
+                               style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;"
+                               onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                     </div>
                 </div>
                 {% endfor %}

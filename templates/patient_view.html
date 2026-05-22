@@ -122,25 +122,29 @@
             <div class="card-title">📅 Weekly Schedule</div>
             <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px; text-align:center;">
                 {% set days = [
-                    ('Mon', patient.mon_plan or 'rest', patient.mon_sessions or 0),
-                    ('Tue', patient.tue_plan or 'rest', patient.tue_sessions or 0),
-                    ('Wed', patient.wed_plan or 'rest', patient.wed_sessions or 0),
-                    ('Thu', patient.thu_plan or 'rest', patient.thu_sessions or 0),
-                    ('Fri', patient.fri_plan or 'rest', patient.fri_sessions or 0),
-                    ('Sat', patient.sat_plan or 'rest', patient.sat_sessions or 0),
-                    ('Sun', patient.sun_plan or 'rest', patient.sun_sessions or 0)
+                    ('Mon', patient.mon_plan or 'rest', patient.mon_sessions or 0, patient.mon_note or ''),
+                    ('Tue', patient.tue_plan or 'rest', patient.tue_sessions or 0, patient.tue_note or ''),
+                    ('Wed', patient.wed_plan or 'rest', patient.wed_sessions or 0, patient.wed_note or ''),
+                    ('Thu', patient.thu_plan or 'rest', patient.thu_sessions or 0, patient.thu_note or ''),
+                    ('Fri', patient.fri_plan or 'rest', patient.fri_sessions or 0, patient.fri_note or ''),
+                    ('Sat', patient.sat_plan or 'rest', patient.sat_sessions or 0, patient.sat_note or ''),
+                    ('Sun', patient.sun_plan or 'rest', patient.sun_sessions or 0, patient.sun_note or '')
                 ] %}
                 {% set plan_info = {'rest': ('😴', 'Rest', '#F0F2F8', '#8892A4'), 'option1': ('⚡', '5 min', '#FFF0EC', '#FF6B2B'), 'option2': ('🔥', '15 min', '#EEF2FF', '#1E4DB7'), 'option3': ('💪', '20 min', '#D1FAE5', '#10B981')} %}
-                {% for day, plan, count in days %}
+                {% for day, plan, count, note in days %}
                 {% set info = plan_info.get(plan, plan_info['rest']) %}
                 <div onclick="showDayDetail('{{ day }}', '{{ plan }}', {{ count }})"
                      style="background:{{ info[2] }};border-radius:12px;padding:12px 4px;cursor:pointer;transition:transform 0.2s;"
-                     onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                     onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+                     data-note="{{ note }}">
                     <div style="font-size:11px;color:{{ info[3] }};margin-bottom:4px;font-weight:600;">{{ day }}</div>
                     <div style="font-size:20px;">{{ info[0] }}</div>
                     <div style="font-size:10px;color:{{ info[3] }};font-weight:600;margin-top:2px;">{{ info[1] }}</div>
                     {% if plan != 'rest' %}
                     <div style="font-size:10px;color:{{ info[3] }};opacity:0.7;">×{{ count }}</div>
+                    {% endif %}
+                    {% if note %}
+                    <div style="font-size:9px;color:{{ info[3] }};opacity:0.6;margin-top:2px;">📝</div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -151,7 +155,8 @@
             <div style="background:white;border-radius:24px;padding:40px;max-width:400px;width:90%;text-align:center;">
                 <div id="modalEmoji" style="font-size:48px;margin-bottom:16px;"></div>
                 <div id="modalTitle" style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;color:#0A2463;margin-bottom:8px;"></div>
-                <div id="modalSub" style="color:#8892A4;font-size:14px;margin-bottom:24px;"></div>
+                <div id="modalSub" style="color:#8892A4;font-size:14px;margin-bottom:12px;"></div>
+                <div id="modalNote" style="display:none;background:#FFF0EC;color:#FF6B2B;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:24px;text-align:left;"></div>
                 <button onclick="document.getElementById('dayModal').style.display='none'" 
                         style="background:#FF6B2B;color:white;border:none;padding:12px 32px;border-radius:12px;font-family:Syne,sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
                     Got it!
@@ -235,6 +240,8 @@
             });
         }
         function showDayDetail(day, plan, count) {
+            const el = event.currentTarget;
+            const note = el.getAttribute('data-note');
             const info = {
                 'rest': {emoji:'😴', title:'Rest Day', sub:'No exercises today. Enjoy your rest!'},
                 'option1': {emoji:'⚡', title:'Option 1 — 5 minutes', sub:`Do this ${count} time(s) today. Light session to warm up.`},
@@ -245,6 +252,13 @@
             document.getElementById('modalEmoji').textContent = d.emoji;
             document.getElementById('modalTitle').textContent = d.title;
             document.getElementById('modalSub').textContent = d.sub;
+            const noteEl = document.getElementById('modalNote');
+            if (note) {
+                noteEl.style.display = 'block';
+                noteEl.textContent = '📝 ' + note;
+            } else {
+                noteEl.style.display = 'none';
+            }
             document.getElementById('dayModal').style.display = 'flex';
         }
         const sessions = {{ sessions | tojson }};
