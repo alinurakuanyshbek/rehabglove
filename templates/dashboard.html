@@ -77,10 +77,38 @@
         .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
         .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; }
         .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+    
+        .burger { display: none; position: fixed; top: 16px; left: 16px; z-index: 300; background: var(--blue); border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-size: 20px; color: white; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+        @media (max-width: 768px) {
+            .burger { display: block; }
+            .sidebar { transform: translateX(-260px); transition: transform 0.3s; z-index: 200; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0 !important; padding: 20px 16px; padding-top: 70px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .patients-grid { grid-template-columns: 1fr !important; }
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+        }
+    
+        .burger { display: none; position: fixed; top: 16px; left: 16px; z-index: 300; background: var(--blue); border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-size: 20px; color: white; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+        @media (max-width: 768px) {
+            .burger { display: block; }
+            .sidebar { transform: translateX(-260px); transition: transform 0.3s; z-index: 200; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0 !important; padding: 20px 16px; padding-top: 70px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .patients-grid { grid-template-columns: 1fr !important; }
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <button class="burger" id="burgerBtn" onclick="toggleSidebar()">☰</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
         <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
         <a href="/dashboard" class="nav-item active"><span>📊</span> Dashboard</a>
         <div class="sidebar-bottom">
@@ -176,5 +204,17 @@
             </form>
         </div>
     </div>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('active');
+}
+</script>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('active');
+}
+</script>
 </body>
 </html>
