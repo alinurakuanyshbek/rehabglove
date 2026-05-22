@@ -493,5 +493,53 @@ def therapy_plan(patient_id):
     return render_template('therapy_plan.html', patient=p)
 
 
+@app.route('/admin/doctor/<int:doctor_id>')
+def admin_doctor_detail(doctor_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('''SELECT d.*, 
+        COUNT(DISTINCT p.id) as patient_count,
+        COUNT(DISTINCT s.id) as session_count,
+        COALESCE(AVG(f.stars), 0) as avg_rating,
+        COALESCE(SUM(s.repetitions), 0) as total_reps
+        FROM doctors d
+        LEFT JOIN patients p ON p.doctor_id = d.id
+        LEFT JOIN sessions s ON s.patient_id = p.id
+        LEFT JOIN feedback f ON f.doctor_id = d.id
+        WHERE d.id=%s GROUP BY d.id''', (doctor_id,))
+    doctor = cur.fetchone()
+    cur.execute('SELECT * FROM patients WHERE doctor_id=%s ORDER BY name', (doctor_id,))
+    patients = cur.fetchall()
+    cur.execute('''SELECT s.*, p.name as patient_name FROM sessions s 
+        JOIN patients p ON s.patient_id = p.id 
+        WHERE p.doctor_id=%s ORDER BY s.date DESC LIMIT 20''', (doctor_id,))
+    recent_sessions = cur.fetchall()
+    cur.close(); conn.close()
+    return render_template('admin_doctor_detail.html', doctor=doctor, patients=patients, recent_sessions=recent_sessions)
+
+@app.route('/admin/edit_doctor/<int:doctor_id>', methods=['GET', 'POST'])
+def admin_edit_doctor(doctor_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM doctors WHERE id=%s', (doctor_id,))
+    doctor = cur.fetchone()
+    if request.method == 'POST':
+        cur2 = conn.cursor()
+        cur2.execute('''UPDATE doctors SET name=%s, username=%s, specialty=%s, city=%s, phone=%s WHERE id=%s''',
+                   (request.form['name'], request.form['username'],
+                    request.form.get('specialty', ''), request.form.get('city', ''),
+                    request.form.get('phone', ''), doctor_id))
+        if request.form.get('password'):
+            cur2.execute('UPDATE doctors SET password=%s WHERE id=%s', (hash_password(request.form['password']), doctor_id))
+        conn.commit()
+        cur2.close(); conn.close()
+        return redirect(url_for('admin_doctor_detail', doctor_id=doctor_id))
+    cur.close(); conn.close()
+    return render_template('admin_edit_doctor.html', doctor=doctor)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

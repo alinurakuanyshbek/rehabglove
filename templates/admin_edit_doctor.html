@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — Edit Doctor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .burger { display: none; position: fixed; top: 16px; left: 16px; z-index: 300; background: var(--blue); border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-size: 20px; color: white; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; z-index: 200; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .sidebar-bottom { margin-top: auto; }
+        .admin-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .admin-name { color: white; font-weight: 600; font-size: 14px; }
+        .admin-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
+        .logout:hover { color: var(--orange); }
+        .main { margin-left: 260px; padding: 40px; max-width: 700px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
+        .back-link:hover { color: var(--orange); }
+        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 8px; }
+        .page-subtitle { color: var(--gray); font-size: 14px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 24px; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--blue); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus { border-color: var(--orange); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .hint { font-size: 12px; color: var(--gray); margin-top: 4px; }
+        .form-actions { display: flex; gap: 12px; }
+        .btn-cancel { flex: 1; padding: 14px; border: 2px solid var(--border); background: white; border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; text-decoration: none; text-align: center; }
+        .btn-submit { flex: 2; padding: 14px; background: var(--orange); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+        @media (max-width: 768px) {
+            .burger { display: block; }
+            .sidebar { transform: translateX(-260px); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 20px 16px; padding-top: 70px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+        <a href="/admin" class="nav-item"><span>⚙️</span> Admin Panel</a>
+        <a href="/admin/doctors_list" class="nav-item"><span>🔐</span> Accounts</a>
+        <div class="sidebar-bottom">
+            <div class="admin-card">
+                <div class="admin-name">{{ session.admin_name }}</div>
+                <div class="admin-role">Super Admin</div>
+            </div>
+            <a href="/logout" class="logout">Sign out</a>
+        </div>
+    </div>
+    <div class="main">
+        <a href="/admin/doctor/{{ doctor.id }}" class="back-link">← Back to Doctor</a>
+        <div class="page-title">Edit Doctor</div>
+        <div class="page-subtitle">Update {{ doctor.name }}'s information</div>
+        <form method="POST" action="/admin/edit_doctor/{{ doctor.id }}">
+            <div class="card">
+                <div class="card-title">👤 Doctor Info</div>
+                <div class="form-group"><label>Full Name</label><input type="text" name="name" value="{{ doctor.name }}" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Username</label><input type="text" name="username" value="{{ doctor.username }}" required></div>
+                    <div class="form-group"><label>Specialty</label><input type="text" name="specialty" value="{{ doctor.specialty or '' }}"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>City</label><input type="text" name="city" value="{{ doctor.city or '' }}"></div>
+                    <div class="form-group"><label>Phone</label><input type="text" name="phone" value="{{ doctor.phone or '' }}"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🔐 Change Password</div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" name="password" placeholder="Leave empty to keep current">
+                    <p class="hint">Current username: {{ doctor.username }}</p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/admin/doctor/{{ doctor.id }}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-submit">Save Changes →</button>
+            </div>
+        </form>
+    </div>
+    <script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+    </script>
+</body>
+</html>

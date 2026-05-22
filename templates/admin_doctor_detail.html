@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — Doctor Detail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; --yellow: #F59E0B; --red: #EF4444; }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .burger { display: none; position: fixed; top: 16px; left: 16px; z-index: 300; background: var(--blue); border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-size: 20px; color: white; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--blue); padding: 32px 24px; display: flex; flex-direction: column; z-index: 200; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+        .logo-icon { width: 40px; height: 40px; background: var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .sidebar-bottom { margin-top: auto; }
+        .admin-card { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
+        .admin-name { color: white; font-weight: 600; font-size: 14px; }
+        .admin-role { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .logout { display: block; text-align: center; margin-top: 12px; color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; }
+        .logout:hover { color: var(--orange); }
+        .main { margin-left: 260px; padding: 40px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--gray); font-size: 14px; text-decoration: none; margin-bottom: 24px; }
+        .back-link:hover { color: var(--orange); }
+        .doctor-header { background: var(--blue); border-radius: 24px; padding: 36px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .doctor-header-left { display: flex; align-items: center; gap: 24px; }
+        .doctor-avatar { width: 80px; height: 80px; background: var(--orange); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+        .doctor-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: white; margin-bottom: 6px; }
+        .doctor-meta { color: rgba(255,255,255,0.6); font-size: 14px; }
+        .edit-btn { background: var(--orange); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+        .stat-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); }
+        .stat-icon { font-size: 28px; margin-bottom: 12px; }
+        .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); margin-bottom: 8px; }
+        .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; }
+        .stat-value.orange { color: var(--orange); }
+        .stat-value.yellow { color: var(--yellow); }
+        .card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 24px; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 20px; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray); padding: 0 0 16px; }
+        .table td { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .table tr:last-child td { border-bottom: none; }
+        .rep-badge { background: #EEF2FF; color: #1E4DB7; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; }
+        @media (max-width: 768px) {
+            .burger { display: block; }
+            .sidebar { transform: translateX(-260px); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 20px 16px; padding-top: 70px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .doctor-header { flex-direction: column; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+        <a href="/admin" class="nav-item"><span>⚙️</span> Admin Panel</a>
+        <a href="/admin/doctors_list" class="nav-item"><span>🔐</span> Accounts</a>
+        <div class="sidebar-bottom">
+            <div class="admin-card">
+                <div class="admin-name">{{ session.admin_name }}</div>
+                <div class="admin-role">Super Admin</div>
+            </div>
+            <a href="/logout" class="logout">Sign out</a>
+        </div>
+    </div>
+    <div class="main">
+        <a href="/admin" class="back-link">← Back to Admin</a>
+        <div class="doctor-header">
+            <div class="doctor-header-left">
+                <div class="doctor-avatar">🧑‍⚕️</div>
+                <div>
+                    <div class="doctor-name">{{ doctor.name }}</div>
+                    <div class="doctor-meta">{{ doctor.specialty or 'No specialty' }} · {{ doctor.city or 'No city' }} · {{ doctor.phone or 'No phone' }}</div>
+                    <div class="doctor-meta" style="margin-top:4px;">@{{ doctor.username }}</div>
+                </div>
+            </div>
+            <a href="/admin/edit_doctor/{{ doctor.id }}" class="edit-btn">✏️ Edit Doctor</a>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Patients</div><div class="stat-value">{{ doctor.patient_count }}</div></div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-label">Sessions</div><div class="stat-value orange">{{ doctor.session_count }}</div></div>
+            <div class="stat-card"><div class="stat-icon">✊</div><div class="stat-label">Total Reps</div><div class="stat-value">{{ doctor.total_reps }}</div></div>
+            <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-label">Rating</div><div class="stat-value yellow">{{ "%.1f"|format(doctor.avg_rating) }}</div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">👥 Patients</div>
+            {% if patients %}
+            <table class="table">
+                <thead><tr><th>Name</th><th>Age</th><th>Diagnosis</th><th>Username</th></tr></thead>
+                <tbody>
+                    {% for p in patients %}
+                    <tr>
+                        <td><strong>{{ p.name }}</strong></td>
+                        <td>{{ p.age }}</td>
+                        <td>{{ p.diagnosis or '—' }}</td>
+                        <td>{{ p.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:var(--gray);text-align:center;padding:40px;">No patients yet.</p>
+            {% endif %}
+        </div>
+        <div class="card">
+            <div class="card-title">🕐 Recent Sessions</div>
+            {% if recent_sessions %}
+            <table class="table">
+                <thead><tr><th>Patient</th><th>Date</th><th>Repetitions</th><th>Duration</th><th>Mode</th></tr></thead>
+                <tbody>
+                    {% for s in recent_sessions %}
+                    <tr>
+                        <td>{{ s.patient_name }}</td>
+                        <td>{{ s.date }}</td>
+                        <td><span class="rep-badge">{{ s.repetitions }} reps</span></td>
+                        <td>{{ s.duration }} min</td>
+                        <td>{{ s.mode or 'manual' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:var(--gray);text-align:center;padding:40px;">No sessions yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+    </script>
+</body>
+</html>
