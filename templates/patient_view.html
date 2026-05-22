@@ -95,7 +95,18 @@
                 <div style="color:rgba(255,255,255,0.6); font-size:14px;">Enjoy your rest. Come back tomorrow!</div>
                 {% else %}
                 <div class="goal-label">Today's Goal from your doctor</div>
-                <div class="goal-text">{{ today_goal }} sessions · {{ patient.min_reps }} reps minimum each</div>
+                {% set plan_mins = {'option1': 5, 'option2': 15, 'option3': 20, 'rest': 0} %}
+                {% set day_map2 = {0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'} %}
+                {% set week_plans = [patient.mon_plan, patient.tue_plan, patient.wed_plan, patient.thu_plan, patient.fri_plan, patient.sat_plan, patient.sun_plan] %}
+                {% set week_mins = namespace(total=0, count=0) %}
+                {% for p in week_plans %}
+                    {% if p and p != 'rest' %}
+                        {% set week_mins.total = week_mins.total + plan_mins.get(p, 0) %}
+                        {% set week_mins.count = week_mins.count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                {% set avg_mins = (week_mins.total / week_mins.count)|int if week_mins.count > 0 else 5 %}
+                <div class="goal-text">{{ today_goal }} sessions · ~{{ avg_mins }} min per session</div>
                 <div class="goal-progress"><div class="goal-fill" style="width: {{ compliance }}%"></div></div>
                 <div class="goal-stats">
                     <div>
@@ -110,19 +121,41 @@
         <div class="card" style="margin-bottom:24px;">
             <div class="card-title">📅 Weekly Schedule</div>
             <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px; text-align:center;">
-                {% set days = [('Mon', patient.mon_sessions), ('Tue', patient.tue_sessions), ('Wed', patient.wed_sessions), ('Thu', patient.thu_sessions), ('Fri', patient.fri_sessions), ('Sat', patient.sat_sessions), ('Sun', patient.sun_sessions)] %}
-                {% for day, goal in days %}
-                <div style="background:{% if goal == 0 %}#F0F2F8{% else %}#FFF0EC{% endif %};border-radius:12px;padding:12px 4px;">
-                    <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">{{ day }}</div>
-                    {% if goal == 0 %}
-                    <div style="font-size:18px;">😴</div>
-                    <div style="font-size:11px;color:var(--gray);">Rest</div>
-                    {% else %}
-                    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;color:var(--orange);">{{ goal }}</div>
-                    <div style="font-size:11px;color:var(--gray);">sessions</div>
+                {% set days = [
+                    ('Mon', patient.mon_plan or 'rest', patient.mon_sessions or 0),
+                    ('Tue', patient.tue_plan or 'rest', patient.tue_sessions or 0),
+                    ('Wed', patient.wed_plan or 'rest', patient.wed_sessions or 0),
+                    ('Thu', patient.thu_plan or 'rest', patient.thu_sessions or 0),
+                    ('Fri', patient.fri_plan or 'rest', patient.fri_sessions or 0),
+                    ('Sat', patient.sat_plan or 'rest', patient.sat_sessions or 0),
+                    ('Sun', patient.sun_plan or 'rest', patient.sun_sessions or 0)
+                ] %}
+                {% set plan_info = {'rest': ('😴', 'Rest', '#F0F2F8', '#8892A4'), 'option1': ('⚡', '5 min', '#FFF0EC', '#FF6B2B'), 'option2': ('🔥', '15 min', '#EEF2FF', '#1E4DB7'), 'option3': ('💪', '20 min', '#D1FAE5', '#10B981')} %}
+                {% for day, plan, count in days %}
+                {% set info = plan_info.get(plan, plan_info['rest']) %}
+                <div onclick="showDayDetail('{{ day }}', '{{ plan }}', {{ count }})"
+                     style="background:{{ info[2] }};border-radius:12px;padding:12px 4px;cursor:pointer;transition:transform 0.2s;"
+                     onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size:11px;color:{{ info[3] }};margin-bottom:4px;font-weight:600;">{{ day }}</div>
+                    <div style="font-size:20px;">{{ info[0] }}</div>
+                    <div style="font-size:10px;color:{{ info[3] }};font-weight:600;margin-top:2px;">{{ info[1] }}</div>
+                    {% if plan != 'rest' %}
+                    <div style="font-size:10px;color:{{ info[3] }};opacity:0.7;">×{{ count }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
+            </div>
+        </div>
+        <!-- Day Detail Modal -->
+        <div id="dayModal" style="display:none;position:fixed;inset:0;background:rgba(10,36,99,0.5);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:white;border-radius:24px;padding:40px;max-width:400px;width:90%;text-align:center;">
+                <div id="modalEmoji" style="font-size:48px;margin-bottom:16px;"></div>
+                <div id="modalTitle" style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;color:#0A2463;margin-bottom:8px;"></div>
+                <div id="modalSub" style="color:#8892A4;font-size:14px;margin-bottom:24px;"></div>
+                <button onclick="document.getElementById('dayModal').style.display='none'" 
+                        style="background:#FF6B2B;color:white;border:none;padding:12px 32px;border-radius:12px;font-family:Syne,sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
+                    Got it!
+                </button>
             </div>
         </div>
 
@@ -200,6 +233,19 @@
             document.querySelectorAll('.star').forEach((s, i) => {
                 s.classList.toggle('active', i < value);
             });
+        }
+        function showDayDetail(day, plan, count) {
+            const info = {
+                'rest': {emoji:'😴', title:'Rest Day', sub:'No exercises today. Enjoy your rest!'},
+                'option1': {emoji:'⚡', title:'Option 1 — 5 minutes', sub:`Do this ${count} time(s) today. Light session to warm up.`},
+                'option2': {emoji:'🔥', title:'Option 2 — 15 minutes', sub:`Do this ${count} time(s) today. Medium intensity session.`},
+                'option3': {emoji:'💪', title:'Option 3 — 20 minutes', sub:`Do this ${count} time(s) today. Full intensive session.`}
+            };
+            const d = info[plan] || info['rest'];
+            document.getElementById('modalEmoji').textContent = d.emoji;
+            document.getElementById('modalTitle').textContent = d.title;
+            document.getElementById('modalSub').textContent = d.sub;
+            document.getElementById('dayModal').style.display = 'flex';
         }
         const sessions = {{ sessions | tojson }};
         const labels = sessions.map(s => s.date ? s.date.slice(5,16) : '').reverse();
