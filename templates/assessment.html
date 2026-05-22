@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehabGlove — How do you feel?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #0A2463; --orange: #FF6B2B; --gray: #8892A4; --border: #E8ECF4; --green: #10B981; }
+        body { font-family: 'DM Sans', sans-serif; background: #F4F6FB; color: var(--blue); min-height: 100vh; }
+        .header { background: var(--blue); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 36px; height: 36px; background: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: white; }
+        .logo-text span { color: var(--orange); }
+        .main { padding: 40px; max-width: 680px; margin: 0 auto; }
+        .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; margin-bottom: 8px; }
+        .page-subtitle { color: var(--gray); font-size: 15px; margin-bottom: 40px; }
+        .card { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 20px; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 24px; }
+        .slider-group { margin-bottom: 24px; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .slider-label { font-size: 14px; font-weight: 500; }
+        .slider-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--orange); }
+        .slider { width: 100%; -webkit-appearance: none; height: 8px; border-radius: 8px; background: #E8ECF4; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--orange); cursor: pointer; box-shadow: 0 2px 8px rgba(255,107,43,0.4); }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-top: 6px; }
+        .mood-grid { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+        .mood-btn { width: 56px; height: 56px; border-radius: 14px; border: 2px solid var(--border); background: white; font-size: 28px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .mood-btn.active { border-color: var(--orange); background: #FFF0EC; transform: scale(1.1); }
+        .grip-grid { display: flex; gap: 12px; }
+        .grip-btn { flex: 1; padding: 14px; border-radius: 12px; border: 2px solid var(--border); background: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .grip-btn.active { border-color: var(--orange); background: #FFF0EC; color: var(--orange); }
+        textarea { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; min-height: 80px; }
+        textarea:focus { border-color: var(--orange); }
+        .submit-btn { width: 100%; padding: 18px; background: var(--orange); color: white; border: none; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+        .submit-btn:hover { background: #FF8C55; transform: translateY(-2px); }
+        .skip-link { display: block; text-align: center; margin-top: 16px; color: var(--gray); font-size: 13px; text-decoration: none; }
+        .skip-link:hover { color: var(--orange); }
+        .section-divider { height: 1px; background: var(--border); margin: 8px 0 24px; }
+        .warning-banner { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #92400E; display: none; }
+        .warning-banner.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><div class="logo-icon">🖐</div><div class="logo-text">Rehab<span>Glove</span></div></div>
+    </div>
+    <div class="main">
+        <div class="page-title">How do you feel? 🌡</div>
+        <div class="page-subtitle">Rate your condition after this session. This helps your doctor adjust your therapy.</div>
+
+        <div class="warning-banner" id="warningBanner">
+            ⚠️ You reported high pain or fatigue. Please inform your doctor and consider resting.
+        </div>
+
+        <form method="POST" action="/assessment/{{ sess.id }}">
+            <div class="card">
+                <div class="card-title">🖐 Physical</div>
+                <div class="slider-group">
+                    <div class="slider-header"><span class="slider-label">Pain Level</span><span class="slider-val" id="pain-val">0</span></div>
+                    <input type="range" class="slider" name="pain_level" min="0" max="10" value="0" oninput="updateSlider(this,'pain-val');checkWarning()">
+                    <div class="slider-labels"><span>No pain</span><span>Moderate</span><span>Severe</span></div>
+                </div>
+                <div class="section-divider"></div>
+                <div class="slider-group">
+                    <div class="slider-header"><span class="slider-label">Fatigue</span><span class="slider-val" id="fatigue-val">0</span></div>
+                    <input type="range" class="slider" name="fatigue" min="0" max="10" value="0" oninput="updateSlider(this,'fatigue-val');checkWarning()">
+                    <div class="slider-labels"><span>Not tired</span><span>Moderate</span><span>Exhausted</span></div>
+                </div>
+                <div class="section-divider"></div>
+                <div class="slider-group">
+                    <div class="slider-header"><span class="slider-label">Dizziness</span><span class="slider-val" id="diz-val">0</span></div>
+                    <input type="range" class="slider" name="dizziness" min="0" max="10" value="0" oninput="updateSlider(this,'diz-val')">
+                    <div class="slider-labels"><span>None</span><span>Moderate</span><span>Severe</span></div>
+                </div>
+                <div class="section-divider"></div>
+                <div style="margin-bottom:8px;font-size:14px;font-weight:500;">Grip Strength Feeling</div>
+                <input type="hidden" name="grip_strength" id="grip-input" value="medium">
+                <div class="grip-grid">
+                    <div class="grip-btn" onclick="selectGrip('weak',this)">😔 Weak</div>
+                    <div class="grip-btn active" onclick="selectGrip('medium',this)">😐 Medium</div>
+                    <div class="grip-btn" onclick="selectGrip('strong',this)">💪 Strong</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🧠 Cognitive</div>
+                <div class="slider-group">
+                    <div class="slider-header"><span class="slider-label">Concentration</span><span class="slider-val" id="conc-val">5</span></div>
+                    <input type="range" class="slider" name="concentration" min="0" max="10" value="5" oninput="updateSlider(this,'conc-val')">
+                    <div class="slider-labels"><span>Cannot focus</span><span>Moderate</span><span>Sharp focus</span></div>
+                </div>
+                <div class="section-divider"></div>
+                <div class="slider-group">
+                    <div class="slider-header"><span class="slider-label">Mental Fatigue</span><span class="slider-val" id="mf-val">0</span></div>
+                    <input type="range" class="slider" name="mental_fatigue" min="0" max="10" value="0" oninput="updateSlider(this,'mf-val')">
+                    <div class="slider-labels"><span>Clear mind</span><span>Moderate</span><span>Overloaded</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">😊 Mood</div>
+                <input type="hidden" name="mood" id="mood-input" value="3">
+                <div class="mood-grid">
+                    <button type="button" class="mood-btn" onclick="selectMood(1,this)" title="Very bad">😞</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(2,this)" title="Bad">😕</button>
+                    <button type="button" class="mood-btn active" onclick="selectMood(3,this)" title="Okay">😐</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(4,this)" title="Good">😊</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(5,this)" title="Great">😄</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💬 Additional Comment</div>
+                <textarea name="comment" placeholder="How did the session feel? Any specific observations..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Assessment →</button>
+            <a href="/patient_dashboard" class="skip-link">Skip for now</a>
+        </form>
+    </div>
+    <script>
+        function updateSlider(el, valId) {
+            document.getElementById(valId).textContent = el.value;
+        }
+        function selectMood(val, el) {
+            document.getElementById('mood-input').value = val;
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+        function selectGrip(val, el) {
+            document.getElementById('grip-input').value = val;
+            document.querySelectorAll('.grip-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+        function checkWarning() {
+            const pain = parseInt(document.querySelector('[name=pain_level]').value);
+            const fatigue = parseInt(document.querySelector('[name=fatigue]').value);
+            document.getElementById('warningBanner').classList.toggle('show', pain > 7 || fatigue > 8);
+        }
+    </script>
+</body>
+</html>

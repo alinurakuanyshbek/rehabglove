@@ -121,6 +121,23 @@ def init_db():
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS fri_note TEXT DEFAULT ''")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sat_note TEXT DEFAULT ''")
         cur.execute("ALTER TABLE patients ADD COLUMN IF NOT EXISTS sun_note TEXT DEFAULT ''")
+
+        cur.execute('''CREATE TABLE IF NOT EXISTS assessments (
+            id SERIAL PRIMARY KEY,
+            patient_id INTEGER REFERENCES patients(id),
+            session_id INTEGER REFERENCES sessions(id),
+            pain_level INTEGER DEFAULT 0,
+            fatigue INTEGER DEFAULT 0,
+            dizziness INTEGER DEFAULT 0,
+            concentration INTEGER DEFAULT 0,
+            mental_fatigue INTEGER DEFAULT 0,
+            mood INTEGER DEFAULT 3,
+            grip_strength TEXT DEFAULT 'medium',
+            comment TEXT DEFAULT '',
+            created_at TEXT
+        )''')
+        cur.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS emergency_stops INTEGER DEFAULT 0")
+        cur.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS interruption_reason TEXT DEFAULT ''")
         # Migration - add new columns
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty TEXT")
         cur.execute("ALTER TABLE doctors ADD COLUMN IF NOT EXISTS city TEXT")
@@ -554,6 +571,107 @@ def admin_edit_doctor(doctor_id):
         return redirect(url_for('admin_doctor_detail', doctor_id=doctor_id))
     cur.close(); conn.close()
     return render_template('admin_edit_doctor.html', doctor=doctor)
+
+@app.route('/assessment/<int:session_id>', methods=['GET', 'POST'])
+def assessment(session_id):
+    if 'patient_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM sessions WHERE id=%s AND patient_id=%s', (session_id, session['patient_id']))
+    sess = cur.fetchone()
+    if not sess:
+        cur.close(); conn.close()
+        return redirect(url_for('patient_dashboard'))
+    if request.method == 'POST':
+        pain = int(request.form.get('pain_level', 0))
+        fatigue = int(request.form.get('fatigue', 0))
+        dizziness = int(request.form.get('dizziness', 0))
+        concentration = int(request.form.get('concentration', 0))
+        mental_fatigue = int(request.form.get('mental_fatigue', 0))
+        mood = int(request.form.get('mood', 3))
+        grip = request.form.get('grip_strength', 'medium')
+        comment = request.form.get('comment', '')
+        cur2 = conn.cursor()
+        cur2.execute('''INSERT INTO assessments 
+            (patient_id, session_id, pain_level, fatigue, dizziness, concentration, mental_fatigue, mood, grip_strength, comment, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+            (session['patient_id'], session_id, pain, fatigue, dizziness, concentration, mental_fatigue, mood, grip, comment, now_astana()))
+        conn.commit()
+        cur2.close(); conn.close()
+        return redirect(url_for('patient_dashboard'))
+    cur.close(); conn.close()
+    return render_template('assessment.html', sess=sess)
+
+@app.route('/export/patient/<int:patient_id>')
+def export_patient(patient_id):
+    if 'doctor_id' not in session and 'admin_id' not in session:
+        return redirect(url_for('login'))
+    import csv
+    import io
+    from flask import Response
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM patients WHERE id=%s', (patient_id,))
+    p = cur.fetchone()
+    cur.execute('''SELECT s.*, a.pain_level, a.fatigue, a.dizziness, a.concentration, 
+        a.mental_fatigue, a.mood, a.grip_strength, a.comment as assessment_comment
+        FROM sessions s
+        LEFT JOIN assessments a ON a.session_id = s.id
+        WHERE s.patient_id=%s ORDER BY s.date DESC''', (patient_id,))
+    sessions_data = cur.fetchall()
+    cur.close(); conn.close()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Date', 'Repetitions', 'Duration', 'Mode', 'Pain', 'Fatigue', 'Dizziness', 'Concentration', 'Mental Fatigue', 'Mood', 'Grip Strength', 'Comment'])
+    for s in sessions_data:
+        writer.writerow([s['date'], s['repetitions'], s['duration'], s['mode'],
+                        s['pain_level'] or '', s['fatigue'] or '', s['dizziness'] or '',
+                        s['concentration'] or '', s['mental_fatigue'] or '',
+                        s['mood'] or '', s['grip_strength'] or '', s['assessment_comment'] or ''])
+    output.seek(0)
+    return Response(output.getvalue(), mimetype='text/csv',
+                   headers={'Content-Disposition': f'attachment; filename={p["name"]}_data.csv'})
+
+@app.route('/analytics/<int:patient_id>')
+def analytics(patient_id):
+    if 'doctor_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute('SELECT * FROM patients WHERE id=%s AND doctor_id=%s', (patient_id, session['doctor_id']))
+    p = cur.fetchone()
+    if not p:
+        cur.close(); conn.close()
+        return redirect(url_for('dashboard'))
+    cur.execute('''SELECT s.date, s.repetitions, s.duration, s.mode,
+        a.pain_level, a.fatigue, a.dizziness, a.mood, a.grip_strength
+        FROM sessions s LEFT JOIN assessments a ON a.session_id = s.id
+        WHERE s.patient_id=%s ORDER BY s.date ASC LIMIT 30''', (patient_id,))
+    data = cur.fetchall()
+    # Streak calculation
+    cur.execute('''SELECT DISTINCT date_trunc('day', date::timestamp) as day 
+        FROM sessions WHERE patient_id=%s ORDER BY day DESC''', (patient_id,))
+    active_days = cur.fetchall()
+    # Alerts
+    cur.execute('''SELECT a.* FROM assessments a WHERE a.patient_id=%s 
+        AND (a.pain_level > 7 OR a.fatigue > 8 OR a.dizziness > 6)
+        ORDER BY a.created_at DESC LIMIT 5''', (patient_id,))
+    alerts = cur.fetchall()
+    # Recommendation
+    cur.execute('''SELECT AVG(pain_level) as avg_pain, AVG(fatigue) as avg_fatigue, 
+        AVG(dizziness) as avg_diz FROM assessments WHERE patient_id=%s''', (patient_id,))
+    avgs = cur.fetchone()
+    recommendation = None
+    if avgs and avgs['avg_pain']:
+        if float(avgs['avg_pain']) > 7 or float(avgs['avg_fatigue'] or 0) > 8:
+            recommendation = {'type': 'reduce', 'msg': 'High pain/fatigue detected. Consider switching to Option 1 and reducing session duration.'}
+        elif float(avgs['avg_diz'] or 0) > 6:
+            recommendation = {'type': 'rest', 'msg': 'High dizziness detected. Consider adding more rest days.'}
+        elif float(avgs['avg_pain']) < 3 and float(avgs['avg_fatigue'] or 0) < 4:
+            recommendation = {'type': 'increase', 'msg': 'Patient is handling therapy well. Consider increasing to Option 2 or 3.'}
+    cur.close(); conn.close()
+    return render_template('analytics.html', patient=p, data=data, alerts=alerts, recommendation=recommendation, active_days=active_days)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
