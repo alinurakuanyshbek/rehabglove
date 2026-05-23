@@ -635,8 +635,6 @@ def export_patient(patient_id):
         return redirect(url_for('login'))
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute('SELECT * FROM patients WHERE id=%s', (patient_id,))
-    p = cur.fetchone()
     cur.execute('''SELECT s.id, s.date, s.repetitions, s.duration, s.mode,
         a.pain_level, a.fatigue, a.dizziness, a.concentration, 
         a.mental_fatigue, a.mood, a.grip_strength, a.comment as assessment_comment
@@ -655,7 +653,7 @@ def export_patient(patient_id):
                         s['mood'] or '', s['grip_strength'] or '', s['assessment_comment'] or ''])
     output.seek(0)
     return Response(output.getvalue(), mimetype='text/csv',
-                   headers={'Content-Disposition': f'attachment; filename={p["name"]}_data.csv'})
+                   headers={'Content-Disposition': f'attachment; filename=patient_{patient_id}_data.csv'})
 
 @app.route('/analytics/<int:patient_id>')
 def analytics(patient_id):
