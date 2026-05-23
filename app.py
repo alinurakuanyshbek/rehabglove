@@ -637,11 +637,12 @@ def export_patient(patient_id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute('SELECT * FROM patients WHERE id=%s', (patient_id,))
     p = cur.fetchone()
-    cur.execute('''SELECT s.*, a.pain_level, a.fatigue, a.dizziness, a.concentration, 
+    cur.execute('''SELECT s.id, s.date, s.repetitions, s.duration, s.mode,
+        a.pain_level, a.fatigue, a.dizziness, a.concentration, 
         a.mental_fatigue, a.mood, a.grip_strength, a.comment as assessment_comment
         FROM sessions s
         LEFT JOIN assessments a ON a.session_id = s.id
-        WHERE s.patient_id=%s ORDER BY s.date DESC''', (patient_id,))
+        WHERE s.patient_id=%s ORDER BY s.date DESC LIMIT 500''', (patient_id,))
     sessions_data = cur.fetchall()
     cur.close(); conn.close()
     output = io.StringIO()
