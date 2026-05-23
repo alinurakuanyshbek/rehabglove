@@ -697,36 +697,6 @@ def analytics(patient_id):
     cur.close(); conn.close()
     return render_template('analytics.html', patient=p, data=data, alerts=alerts, recommendation=recommendation, active_days=active_days)
 
-@app.route('/assessment/<int:session_id>', methods=['GET', 'POST'])
-def assessment(session_id):
-    if 'patient_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute('SELECT * FROM sessions WHERE id=%s AND patient_id=%s', (session_id, session['patient_id']))
-    sess = cur.fetchone()
-    if not sess:
-        cur.close(); conn.close()
-        return redirect(url_for('patient_dashboard'))
-    if request.method == 'POST':
-        pain = int(request.form.get('pain_level', 0))
-        fatigue = int(request.form.get('fatigue', 0))
-        dizziness = int(request.form.get('dizziness', 0))
-        concentration = int(request.form.get('concentration', 0))
-        mental_fatigue = int(request.form.get('mental_fatigue', 0))
-        mood = int(request.form.get('mood', 3))
-        grip = request.form.get('grip_strength', 'medium')
-        comment = request.form.get('comment', '')
-        cur2 = conn.cursor()
-        cur2.execute('''INSERT INTO assessments 
-            (patient_id, session_id, pain_level, fatigue, dizziness, concentration, mental_fatigue, mood, grip_strength, comment, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-            (session['patient_id'], session_id, pain, fatigue, dizziness, concentration, mental_fatigue, mood, grip, comment, now_astana()))
-        conn.commit()
-        cur2.close(); conn.close()
-        return redirect(url_for('patient_dashboard'))
-    cur.close(); conn.close()
-    return render_template('assessment.html', sess=sess)
 
 @app.route('/export/patient/<int:patient_id>')
 def export_patient(patient_id):
