@@ -108,7 +108,7 @@
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
                 <span class="patient-badge">{{ patient.diagnosis }}</span>
-                <a href="/therapy_plan/{{ patient.id }}" style="background:#D1FAE5;color:#10B981;padding:10px 20px;border-radius:10px;font-family:Syne,sans-serif;font-weight:600;font-size:13px;text-decoration:none;margin-right:8px;">📅 Therapy Plan</a><a href="/edit_patient/{{ patient.id }}" style="background:#EEF2FF;color:#1E4DB7;padding:10px 20px;border-radius:10px;font-family:Syne,sans-serif;font-weight:600;font-size:13px;text-decoration:none;margin-right:8px;">✏️ Edit</a><a href="/delete_patient/{{ patient.id }}" class="delete-btn" onclick="return confirm('Delete this patient? All data will be lost!')">🗑 Delete</a>
+                <a href="/therapy_plan/{{ patient.id }}" style="background:#D1FAE5;color:#10B981;padding:10px 20px;border-radius:10px;font-family:Syne,sans-serif;font-weight:600;font-size:13px;text-decoration:none;margin-right:8px;">📅 Therapy Plan</a><a href="/analytics/{{ patient.id }}" style="background:#EEF2FF;color:#1E4DB7;padding:10px 20px;border-radius:10px;font-family:Syne,sans-serif;font-weight:600;font-size:13px;text-decoration:none;margin-right:8px;">📊 Analytics</a><a href="/edit_patient/{{ patient.id }}" style="background:#EEF2FF;color:#1E4DB7;padding:10px 20px;border-radius:10px;font-family:Syne,sans-serif;font-weight:600;font-size:13px;text-decoration:none;margin-right:8px;">✏️ Edit</a><a href="/delete_patient/{{ patient.id }}" class="delete-btn" onclick="return confirm('Delete this patient? All data will be lost!')">🗑 Delete</a>
             </div>
         </div>
 

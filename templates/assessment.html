@@ -50,11 +50,7 @@
     <div class="main">
         <div class="page-title">How do you feel? 🌡</div>
         <div class="page-subtitle">Rate your condition after this session. This helps your doctor adjust your therapy.</div>
-
-        <div class="warning-banner" id="warningBanner">
-            ⚠️ You reported high pain or fatigue. Please inform your doctor and consider resting.
-        </div>
-
+        <div class="warning-banner" id="warningBanner">⚠️ You reported high pain or fatigue. Please inform your doctor and consider resting.</div>
         <form method="POST" action="/assessment/{{ sess.id }}">
             <div class="card">
                 <div class="card-title">🖐 Physical</div>
@@ -71,7 +67,7 @@
                 </div>
                 <div class="section-divider"></div>
                 <div class="slider-group">
-                    <div class="slider-header"><span class="slider-label">Dizziness</span><span class="slider-val" id="diz-val">0</span></div>
+                    <div class="slider-header"><span class="slider-label">Dizziness</span><span class="slider-label" id="diz-val" style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:var(--orange);">0</span></div>
                     <input type="range" class="slider" name="dizziness" min="0" max="10" value="0" oninput="updateSlider(this,'diz-val')">
                     <div class="slider-labels"><span>None</span><span>Moderate</span><span>Severe</span></div>
                 </div>
@@ -84,7 +80,6 @@
                     <div class="grip-btn" onclick="selectGrip('strong',this)">💪 Strong</div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">🧠 Cognitive</div>
                 <div class="slider-group">
@@ -99,32 +94,27 @@
                     <div class="slider-labels"><span>Clear mind</span><span>Moderate</span><span>Overloaded</span></div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">😊 Mood</div>
                 <input type="hidden" name="mood" id="mood-input" value="3">
                 <div class="mood-grid">
-                    <button type="button" class="mood-btn" onclick="selectMood(1,this)" title="Very bad">😞</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(2,this)" title="Bad">😕</button>
-                    <button type="button" class="mood-btn active" onclick="selectMood(3,this)" title="Okay">😐</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(4,this)" title="Good">😊</button>
-                    <button type="button" class="mood-btn" onclick="selectMood(5,this)" title="Great">😄</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(1,this)">😞</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(2,this)">😕</button>
+                    <button type="button" class="mood-btn active" onclick="selectMood(3,this)">😐</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(4,this)">😊</button>
+                    <button type="button" class="mood-btn" onclick="selectMood(5,this)">😄</button>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">💬 Additional Comment</div>
                 <textarea name="comment" placeholder="How did the session feel? Any specific observations..."></textarea>
             </div>
-
             <button type="submit" class="submit-btn">Submit Assessment →</button>
             <a href="/patient_dashboard" class="skip-link">Skip for now</a>
         </form>
     </div>
     <script>
-        function updateSlider(el, valId) {
-            document.getElementById(valId).textContent = el.value;
-        }
+        function updateSlider(el, valId) { document.getElementById(valId).textContent = el.value; }
         function selectMood(val, el) {
             document.getElementById('mood-input').value = val;
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));

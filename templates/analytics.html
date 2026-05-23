@@ -40,9 +40,7 @@
         .rec-icon { font-size: 36px; }
         .rec-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 4px; }
         .rec-msg { font-size: 14px; color: var(--gray); }
-        .alerts-section { margin-bottom: 32px; }
         .alert-card { background: #FEE2E2; border: 1px solid var(--red); border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
-        .alert-icon { font-size: 24px; }
         .alert-text { font-size: 14px; color: #991B1B; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
         .card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 2px 12px rgba(10,36,99,0.06); margin-bottom: 24px; }
@@ -54,7 +52,7 @@
         .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
         .heat-cell { aspect-ratio: 1; border-radius: 4px; background: #F0F2F8; }
         .heat-cell.active { background: var(--orange); }
-        .heat-cell.today { background: var(--blue); }
+        .heat-cell.today { background: var(--blue); border: 2px solid var(--orange); }
         @media (max-width: 768px) {
             .burger { display: block; }
             .sidebar { transform: translateX(-260px); transition: transform 0.3s; }
@@ -91,33 +89,25 @@
 
         {% if recommendation %}
         <div class="recommendation {{ recommendation.type }}">
-            <div class="rec-icon">
-                {% if recommendation.type == 'reduce' %}⚠️
-                {% elif recommendation.type == 'rest' %}🛑
-                {% else %}✅{% endif %}
-            </div>
+            <div class="rec-icon">{% if recommendation.type == 'reduce' %}⚠️{% elif recommendation.type == 'rest' %}🛑{% else %}✅{% endif %}</div>
             <div>
-                <div class="rec-title">
-                    {% if recommendation.type == 'reduce' %}Reduce Intensity
-                    {% elif recommendation.type == 'rest' %}Add Rest Days
-                    {% else %}Ready to Progress{% endif %}
-                </div>
+                <div class="rec-title">{% if recommendation.type == 'reduce' %}Reduce Intensity{% elif recommendation.type == 'rest' %}Add Rest Days{% else %}Ready to Progress{% endif %}</div>
                 <div class="rec-msg">{{ recommendation.msg }}</div>
             </div>
         </div>
         {% endif %}
 
         {% if alerts %}
-        <div class="alerts-section">
+        <div style="margin-bottom:32px;">
             <div style="font-family:Syne,sans-serif;font-weight:700;font-size:16px;margin-bottom:12px;">🚨 Recent Alerts</div>
             {% for a in alerts %}
             <div class="alert-card">
-                <div class="alert-icon">⚠️</div>
+                <span style="font-size:24px;">⚠️</span>
                 <div class="alert-text">
                     {{ a.created_at }} —
-                    {% if a.pain_level > 7 %}Pain: {{ a.pain_level }}/10{% endif %}
-                    {% if a.fatigue > 8 %}Fatigue: {{ a.fatigue }}/10{% endif %}
-                    {% if a.dizziness > 6 %}Dizziness: {{ a.dizziness }}/10{% endif %}
+                    {% if a.pain_level and a.pain_level > 7 %}Pain: {{ a.pain_level }}/10 {% endif %}
+                    {% if a.fatigue and a.fatigue > 8 %}Fatigue: {{ a.fatigue }}/10 {% endif %}
+                    {% if a.dizziness and a.dizziness > 6 %}Dizziness: {{ a.dizziness }}/10{% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -146,25 +136,21 @@
             </div>
         </div>
     </div>
-
     <script>
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
-
         const data = {{ data | tojson }};
         const labels = data.map(d => d.date ? d.date.slice(5,16) : '');
         const reps = data.map(d => d.repetitions || 0);
         const pain = data.map(d => d.pain_level || 0);
         const fatigue = data.map(d => d.fatigue || 0);
-
         new Chart(document.getElementById('repsChart'), {
             type: 'line',
             data: { labels, datasets: [{ label: 'Repetitions', data: reps, borderColor: '#FF6B2B', backgroundColor: 'rgba(255,107,43,0.1)', borderWidth: 2, fill: true, tension: 0.4 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
-
         new Chart(document.getElementById('painChart'), {
             type: 'line',
             data: { labels, datasets: [
@@ -173,8 +159,6 @@
             ]},
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 10 } } }
         });
-
-        // Heatmap
         const activeDays = {{ active_days | tojson }};
         const activeDates = activeDays.map(d => d.day ? d.day.slice(0,10) : '');
         const heatmap = document.getElementById('heatmap');
@@ -186,7 +170,7 @@
             const cell = document.createElement('div');
             cell.className = 'heat-cell';
             if (i === 0) cell.classList.add('today');
-            else if (activeDates.some(ad => ad.startsWith(dateStr))) cell.classList.add('active');
+            else if (activeDates.some(ad => ad && ad.startsWith(dateStr))) cell.classList.add('active');
             cell.title = dateStr;
             heatmap.appendChild(cell);
         }
