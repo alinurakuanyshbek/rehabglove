@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response
+import csv
+import io
 import psycopg2
 import psycopg2.extras
 import hashlib
@@ -631,9 +633,6 @@ def assessment(session_id):
 def export_patient(patient_id):
     if 'doctor_id' not in session and 'admin_id' not in session:
         return redirect(url_for('login'))
-    import csv
-    import io
-    from flask import Response
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute('SELECT * FROM patients WHERE id=%s', (patient_id,))
