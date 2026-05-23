@@ -698,72 +698,7 @@ def analytics(patient_id):
     return render_template('analytics.html', patient=p, data=data, alerts=alerts, recommendation=recommendation, active_days=active_days)
 
 
-@app.route('/export/patient/<int:patient_id>')
-def export_patient(patient_id):
-    if 'doctor_id' not in session and 'admin_id' not in session:
-        return redirect(url_for('login'))
-    import csv
-    import io
-    from flask import Response
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute('SELECT * FROM patients WHERE id=%s', (patient_id,))
-    p = cur.fetchone()
-    cur.execute('''SELECT s.*, a.pain_level, a.fatigue, a.dizziness, a.concentration, 
-        a.mental_fatigue, a.mood, a.grip_strength, a.comment as assessment_comment
-        FROM sessions s
-        LEFT JOIN assessments a ON a.session_id = s.id
-        WHERE s.patient_id=%s ORDER BY s.date DESC''', (patient_id,))
-    sessions_data = cur.fetchall()
-    cur.close(); conn.close()
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['Date', 'Repetitions', 'Duration', 'Mode', 'Pain', 'Fatigue', 'Dizziness', 'Concentration', 'Mental Fatigue', 'Mood', 'Grip Strength', 'Comment'])
-    for s in sessions_data:
-        writer.writerow([s['date'], s['repetitions'], s['duration'], s['mode'],
-                        s['pain_level'] or '', s['fatigue'] or '', s['dizziness'] or '',
-                        s['concentration'] or '', s['mental_fatigue'] or '',
-                        s['mood'] or '', s['grip_strength'] or '', s['assessment_comment'] or ''])
-    output.seek(0)
-    return Response(output.getvalue(), mimetype='text/csv',
-                   headers={'Content-Disposition': f'attachment; filename={p["name"]}_data.csv'})
 
-@app.route('/analytics/<int:patient_id>')
-def analytics(patient_id):
-    if 'doctor_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute('SELECT * FROM patients WHERE id=%s AND doctor_id=%s', (patient_id, session['doctor_id']))
-    p = cur.fetchone()
-    if not p:
-        cur.close(); conn.close()
-        return redirect(url_for('dashboard'))
-    cur.execute('''SELECT s.date, s.repetitions, s.duration, s.mode,
-        a.pain_level, a.fatigue, a.dizziness, a.mood, a.grip_strength
-        FROM sessions s LEFT JOIN assessments a ON a.session_id = s.id
-        WHERE s.patient_id=%s ORDER BY s.date ASC LIMIT 30''', (patient_id,))
-    data = cur.fetchall()
-    cur.execute('''SELECT DISTINCT date_trunc('day', date::timestamp) as day 
-        FROM sessions WHERE patient_id=%s ORDER BY day DESC''', (patient_id,))
-    active_days = cur.fetchall()
-    cur.execute('''SELECT a.* FROM assessments a WHERE a.patient_id=%s 
-        AND (a.pain_level > 7 OR a.fatigue > 8 OR a.dizziness > 6)
-        ORDER BY a.created_at DESC LIMIT 5''', (patient_id,))
-    alerts = cur.fetchall()
-    cur.execute('''SELECT AVG(pain_level) as avg_pain, AVG(fatigue) as avg_fatigue, 
-        AVG(dizziness) as avg_diz FROM assessments WHERE patient_id=%s''', (patient_id,))
-    avgs = cur.fetchone()
-    recommendation = None
-    if avgs and avgs['avg_pain']:
-        if float(avgs['avg_pain']) > 7 or float(avgs['avg_fatigue'] or 0) > 8:
-            recommendation = {'type': 'reduce', 'msg': 'High pain/fatigue detected. Consider switching to Option 1 and reducing session duration.'}
-        elif float(avgs['avg_diz'] or 0) > 6:
-            recommendation = {'type': 'rest', 'msg': 'High dizziness detected. Consider adding more rest days.'}
-        elif float(avgs['avg_pain']) < 3 and float(avgs['avg_fatigue'] or 0) < 4:
-            recommendation = {'type': 'increase', 'msg': 'Patient is handling therapy well. Consider increasing to Option 2 or 3.'}
-    cur.close(); conn.close()
-    return render_template('analytics.html', patient=p, data=data, alerts=alerts, recommendation=recommendation, active_days=active_days)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
